@@ -1,0 +1,27 @@
+# Git files and folders
+.git
+.gitignore
+
+# Local and environment files
+.dockerignore
+.env
+.env.*
+
+# Dependencies and builds folders
+node_modules
+dist
+coverage
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Infrastructure and Docs
+Dockerfile
+docker-compose.yml
+postgres_data/
+README.md
+
+# Editors and OS
+.vscode
+.idea
+.DS_Store
