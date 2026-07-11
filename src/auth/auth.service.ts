@@ -31,7 +31,7 @@ export class AuthService {
   private generateTokens(email: string, sub: string) {
     const payload = { email, sub };
     const refreshPayload = { ...payload, type: 'refresh' };
-    
+
     return {
       access_token: this.jwtService.sign(payload),
       refresh_token: this.jwtService.sign(refreshPayload, { expiresIn: '7d' }),
@@ -52,18 +52,22 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken);
+      const payload = this.jwtService.verify<{
+        type: string;
+        sub: string;
+        email: string;
+      }>(refreshToken);
       if (payload.type !== 'refresh') {
         throw new UnauthorizedException('Invalid token type');
       }
-      
+
       const user = await this.usersService.findOne(payload.sub);
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
 
       return this.generateTokens(user.email, user.id);
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

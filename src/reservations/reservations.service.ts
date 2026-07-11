@@ -77,9 +77,17 @@ export class ReservationsService {
 
     try {
       return await this.reservationsRepository.createWithCarLock(entity);
-    } catch (e: any) {
-      if (e.message === 'USER_OVERLAP') throw new BadRequestException('User already has a reservation in this period');
-      if (e.message === 'CAR_OVERLAP') throw new BadRequestException('Car is already reserved in this period');
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        if (e.message === 'USER_OVERLAP')
+          throw new BadRequestException(
+            'User already has a reservation in this period',
+          );
+        if (e.message === 'CAR_OVERLAP')
+          throw new BadRequestException(
+            'Car is already reserved in this period',
+          );
+      }
       throw e;
     }
   }
@@ -128,10 +136,19 @@ export class ReservationsService {
         carId,
         final_value,
       });
-    } catch (e: any) {
-      if (e.message === 'NOT_FOUND') throw new NotFoundException('Reservation not found');
-      if (e.message === 'USER_OVERLAP') throw new BadRequestException('User already has a reservation in this period');
-      if (e.message === 'CAR_OVERLAP') throw new BadRequestException('Car is already reserved in this period');
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        if (e.message === 'NOT_FOUND')
+          throw new NotFoundException('Reservation not found');
+        if (e.message === 'USER_OVERLAP')
+          throw new BadRequestException(
+            'User already has a reservation in this period',
+          );
+        if (e.message === 'CAR_OVERLAP')
+          throw new BadRequestException(
+            'Car is already reserved in this period',
+          );
+      }
       throw e;
     }
   }

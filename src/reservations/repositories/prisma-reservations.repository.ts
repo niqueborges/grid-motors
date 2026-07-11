@@ -84,7 +84,7 @@ export class PrismaReservationsRepository implements IReservationsRepository {
     return this.prisma.$transaction(async (tx) => {
       // Lock the car to prevent concurrent overlapping reservations
       await tx.$executeRaw`SELECT * FROM "cars" WHERE "id" = ${data.carId}::uuid FOR UPDATE`;
-      
+
       const baseWhere: Prisma.ReservationWhereInput = {
         start_date: { lte: data.end_date },
         end_date: { gte: data.start_date },
@@ -147,9 +147,7 @@ export class PrismaReservationsRepository implements IReservationsRepository {
       if (carOverlapCount > 0) throw new Error('CAR_OVERLAP');
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id: _id, ...rest } = data as any;
-      delete rest.createdAt;
-      delete rest.updatedAt;
+      const { id: _id, createdAt, updatedAt, ...rest } = data;
 
       return tx.reservation.update({
         where: { id },
