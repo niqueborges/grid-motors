@@ -17,6 +17,11 @@ describe('UsersService', () => {
     getAddressByCep: jest.fn(),
   };
 
+  const mockHashProvider = {
+    hash: jest.fn(),
+    compare: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -28,6 +33,10 @@ describe('UsersService', () => {
         {
           provide: 'IAddressProvider',
           useValue: mockAddressProvider,
+        },
+        {
+          provide: 'IHashProvider',
+          useValue: mockHashProvider,
         },
       ],
     }).compile();

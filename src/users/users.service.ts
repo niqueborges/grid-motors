@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import type { IUsersRepository } from './repositories/users.repository';
 import type { IAddressProvider } from '../common/providers/address/address-provider.interface';
+import type { IHashProvider } from '../common/providers/hash/hash-provider.interface';
 import { UserEntity } from './entities/user.entity';
 
 @Injectable()
@@ -17,6 +18,8 @@ export class UsersService {
     private readonly usersRepository: IUsersRepository,
     @Inject('IAddressProvider')
     private readonly addressProvider: IAddressProvider,
+    @Inject('IHashProvider')
+    private readonly hashProvider: IHashProvider,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -42,11 +45,13 @@ export class UsersService {
       );
     }
 
+    const hashedPassword = await this.hashProvider.hash(createUserDto.password);
+
     const user = await this.usersRepository.create({
       name: createUserDto.name,
       email: createUserDto.email,
       cpf: createUserDto.cpf,
-      password: createUserDto.password, // bcrypt will be added in auth feature
+      password: hashedPassword,
       birth: birthDate,
       cep: createUserDto.cep,
       qualified: createUserDto.qualified,
@@ -104,7 +109,9 @@ export class UsersService {
     if (dto.name) dataToUpdate.name = dto.name;
     if (dto.email) dataToUpdate.email = dto.email;
     if (dto.cpf) dataToUpdate.cpf = dto.cpf;
-    if (dto.password) dataToUpdate.password = dto.password; // bcrypt later
+    if (dto.password) {
+      dataToUpdate.password = await this.hashProvider.hash(dto.password);
+    }
     if (dto.qualified) dataToUpdate.qualified = dto.qualified;
 
     if (dto.birth) {
