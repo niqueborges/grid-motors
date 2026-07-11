@@ -8,10 +8,12 @@ import {
   Delete,
   Query,
   UseGuards,
+  UseInterceptors,
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { CarsService } from './cars.service';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
@@ -44,6 +46,7 @@ export class CarsController {
   }
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({ summary: 'List all cars with pagination and filters' })
   @ApiResponse({ status: 200, description: 'List of cars.' })
   findAll(@Query() query: FindCarsQueryDto) {

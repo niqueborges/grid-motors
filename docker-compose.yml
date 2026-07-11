@@ -25,6 +25,14 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/grid_motors?schema=public
       - JWT_SECRET=${JWT_SECRET:-super_secret_key_for_the_challenge}
-    command: sh -c "npx prisma migrate deploy && npm run start:dev"
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: sh -c "npx prisma migrate deploy && npm run start:prod"
     depends_on:
       - db
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
