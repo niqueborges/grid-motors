@@ -14,5 +14,6 @@ import { PrismaCarsRepository } from './repositories/prisma-cars.repository';
       useClass: PrismaCarsRepository,
     },
   ],
+  exports: ['ICarsRepository'],
 })
 export class CarsModule {}

@@ -28,8 +28,10 @@ model User {
 
   qualified String
 
+  // Audit control
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
 
   @@map("users") // Maps the table name in Postgres to lowercase and plural
 }
@@ -49,6 +51,7 @@ model Car {
 
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
 
   @@map("cars")
 }
@@ -67,4 +70,25 @@ model Accessory {
   updatedAt DateTime @updatedAt
 
   @@map("accessories")
+}
+
+// ==========================================
+// MODEL: Reservation
+// ==========================================
+model Reservation {
+  id          String   @id @default(uuid())
+  start_date  DateTime
+  end_date    DateTime
+  final_value Float
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  car   Car    @relation(fields: [carId], references: [id])
+  carId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reservations")
 }
