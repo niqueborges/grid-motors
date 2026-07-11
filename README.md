@@ -26,9 +26,10 @@ grid-motors/
 ├── prisma/                 # Database schema and migrations
 ├── src/                    # Source code
 │   ├── auth/               # Authentication module (JWT strategy, guards)
-│   ├── users/              # Users module (CRUD, ViaCEP integration)
 │   ├── cars/               # Cars module (CRUD, accessories management)
+│   ├── common/             # Cross-cutting utilities (Filters, Providers, Validators, Transforms)
 │   ├── reservations/       # Reservations module (Business rules, calculations)
+│   ├── users/              # Users module (CRUD, ViaCEP integration)
 │   ├── main.ts             # Application entry point
 │   └── app.module.ts       # Main module
 ├── test/                   # E2E Tests (if applicable)
