@@ -115,7 +115,6 @@ From there, you can explore all endpoints, test payloads, and authenticate using
 ## 🖼 Screenshots / API Demo
 
 ![Swagger UI](docs/swagger-ui.png)
-*(Please add a swagger-ui.png image inside the docs folder to display here)*
 
 ## 🏛 Architectural Decisions
 

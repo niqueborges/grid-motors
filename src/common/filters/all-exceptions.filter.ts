@@ -23,7 +23,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const exceptionResponse = exception.getResponse();
+      const exceptionResponse = exception.getResponse() as Record<string, unknown> | string;
       message =
         typeof exceptionResponse === 'object' &&
         exceptionResponse !== null &&
