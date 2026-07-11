@@ -7,7 +7,7 @@ import {
 
 @ValidatorConstraint({ async: false })
 export class IsOver18Constraint implements ValidatorConstraintInterface {
-  validate(birthStr: any) {
+  validate(birthStr: unknown) {
     if (typeof birthStr !== 'string') return false;
 
     const [day, month, year] = birthStr.split('/');

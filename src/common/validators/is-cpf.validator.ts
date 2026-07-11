@@ -7,7 +7,7 @@ import {
 
 @ValidatorConstraint({ async: false })
 export class IsCpfConstraint implements ValidatorConstraintInterface {
-  validate(cpf: any) {
+  validate(cpf: unknown) {
     if (typeof cpf !== 'string') return false;
 
     const cleanCpf = cpf.replace(/[^\d]+/g, '');
