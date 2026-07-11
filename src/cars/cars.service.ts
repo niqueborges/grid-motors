@@ -1,26 +1,57 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
+import { FindCarsQueryDto } from './dto/find-cars.query.dto';
+import { ICarsRepository } from './repositories/cars.repository.interface';
+import { CarEntity } from './entities/car.entity';
+import { UpdateAccessoryDto } from './dto/update-accessory.dto';
 
 @Injectable()
 export class CarsService {
-  create(createCarDto: CreateCarDto) {
-    return 'This action adds a new car';
+  constructor(
+    @Inject('ICarsRepository')
+    private readonly carsRepository: ICarsRepository,
+  ) {}
+
+  async create(createCarDto: CreateCarDto): Promise<CarEntity> {
+    const carEntity: CarEntity = {
+      model: createCarDto.model,
+      color: createCarDto.color,
+      year: createCarDto.year,
+      value_per_day: createCarDto.value_per_day,
+      number_of_passengers: createCarDto.number_of_passengers,
+      accessories: createCarDto.accessories.map((a) => ({ description: a.description })),
+    };
+    return this.carsRepository.create(carEntity);
   }
 
-  findAll() {
-    return `This action returns all cars`;
+  async findAll(query: FindCarsQueryDto) {
+    return this.carsRepository.findAll(query);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} car`;
+  async findOne(id: string): Promise<CarEntity> {
+    const car = await this.carsRepository.findById(id);
+    if (!car) {
+      throw new NotFoundException(`Car with ID ${id} not found`);
+    }
+    return car;
   }
 
-  update(id: number, updateCarDto: UpdateCarDto) {
-    return `This action updates a #${id} car`;
+  async update(id: string, updateCarDto: UpdateCarDto): Promise<CarEntity> {
+    // Check if exists
+    await this.findOne(id);
+    return this.carsRepository.update(id, updateCarDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} car`;
+  async remove(id: string): Promise<void> {
+    // Check if exists
+    await this.findOne(id);
+    return this.carsRepository.delete(id);
+  }
+
+  async updateAccessory(carId: string, updateAccessoryDto: UpdateAccessoryDto): Promise<CarEntity> {
+    // Check if exists
+    await this.findOne(carId);
+    return this.carsRepository.updateAccessories(carId, updateAccessoryDto.description);
   }
 }
