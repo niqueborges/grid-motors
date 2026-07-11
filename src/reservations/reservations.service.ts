@@ -23,12 +23,11 @@ export class ReservationsService {
     private readonly carsRepository: ICarsRepository,
   ) {}
 
-  private async calculateFinalValueAndCheckOverlap(
+  private async calculateFinalValue(
     userId: string,
     carId: string,
     startDate: Date,
     endDate: Date,
-    excludeReservationId?: string,
   ) {
     if (startDate > endDate) {
       throw new BadRequestException(
@@ -47,24 +46,6 @@ export class ReservationsService {
     const car = await this.carsRepository.findById(carId);
     if (!car) throw new NotFoundException('Car not found');
 
-    const overlap =
-      await this.reservationsRepository.findOverlappingReservations(
-        userId,
-        carId,
-        startDate,
-        endDate,
-        excludeReservationId,
-      );
-
-    if (overlap.hasUserOverlap) {
-      throw new BadRequestException(
-        'User already has a reservation in this period',
-      );
-    }
-    if (overlap.hasCarOverlap) {
-      throw new BadRequestException('Car is already reserved in this period');
-    }
-
     // calculate diff in days (inclusive)
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -79,7 +60,7 @@ export class ReservationsService {
     createReservationDto: CreateReservationDto,
     userId: string,
   ): Promise<ReservationEntity> {
-    const final_value = await this.calculateFinalValueAndCheckOverlap(
+    const final_value = await this.calculateFinalValue(
       userId,
       createReservationDto.id_car,
       createReservationDto.start_date,
@@ -94,7 +75,13 @@ export class ReservationsService {
       final_value,
     };
 
-    return this.reservationsRepository.create(entity);
+    try {
+      return await this.reservationsRepository.createWithCarLock(entity);
+    } catch (e: any) {
+      if (e.message === 'USER_OVERLAP') throw new BadRequestException('User already has a reservation in this period');
+      if (e.message === 'CAR_OVERLAP') throw new BadRequestException('Car is already reserved in this period');
+      throw e;
+    }
   }
 
   findAll(query: FindReservationsQueryDto) {
@@ -126,21 +113,27 @@ export class ReservationsService {
       updateReservationDto.end_date ||
       updateReservationDto.id_car
     ) {
-      final_value = await this.calculateFinalValueAndCheckOverlap(
+      final_value = await this.calculateFinalValue(
         existing.userId,
         carId,
         startDate,
         endDate,
-        id,
       );
     }
 
-    return this.reservationsRepository.update(id, {
-      start_date: startDate,
-      end_date: endDate,
-      carId,
-      final_value,
-    });
+    try {
+      return await this.reservationsRepository.updateWithCarLock(id, {
+        start_date: startDate,
+        end_date: endDate,
+        carId,
+        final_value,
+      });
+    } catch (e: any) {
+      if (e.message === 'NOT_FOUND') throw new NotFoundException('Reservation not found');
+      if (e.message === 'USER_OVERLAP') throw new BadRequestException('User already has a reservation in this period');
+      if (e.message === 'CAR_OVERLAP') throw new BadRequestException('Car is already reserved in this period');
+      throw e;
+    }
   }
 
   async remove(id: string): Promise<void> {

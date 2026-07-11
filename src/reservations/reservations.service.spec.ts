@@ -2,12 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReservationsService } from './reservations.service';
 
 const mockReservationsRepository = {
-  create: jest.fn(),
+  createWithCarLock: jest.fn(),
   findAll: jest.fn(),
   findById: jest.fn(),
-  update: jest.fn(),
+  updateWithCarLock: jest.fn(),
   delete: jest.fn(),
-  findOverlappingReservations: jest.fn(),
 };
 
 const mockUsersRepository = {
@@ -65,13 +64,8 @@ describe('ReservationsService', () => {
     it('should create a reservation successfully', async () => {
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
       mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
-      mockReservationsRepository.findOverlappingReservations.mockResolvedValue({
-        hasUserOverlap: false,
-        hasCarOverlap: false,
-      });
-
       const mockResult = { id: 'res-1', final_value: 200 };
-      mockReservationsRepository.create.mockResolvedValue(mockResult);
+      mockReservationsRepository.createWithCarLock.mockResolvedValue(mockResult);
 
       const result = await service.create(
         {
@@ -83,7 +77,7 @@ describe('ReservationsService', () => {
       );
 
       expect(result).toEqual(mockResult);
-      expect(mockReservationsRepository.create).toHaveBeenCalledWith(
+      expect(mockReservationsRepository.createWithCarLock).toHaveBeenCalledWith(
         expect.objectContaining({
           final_value: 200, // 2 days * 100
         }),
@@ -135,13 +129,8 @@ describe('ReservationsService', () => {
       mockReservationsRepository.findById.mockResolvedValue(existing);
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
       mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
-      mockReservationsRepository.findOverlappingReservations.mockResolvedValue({
-        hasUserOverlap: false,
-        hasCarOverlap: false,
-      });
-
       const updated = { ...existing, final_value: 300 };
-      mockReservationsRepository.update.mockResolvedValue(updated);
+      mockReservationsRepository.updateWithCarLock.mockResolvedValue(updated);
 
       const result = await service.update('res-1', {
         start_date: new Date('2023-01-01'),

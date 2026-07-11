@@ -20,11 +20,9 @@ export interface IReservationsRepository {
     data: Partial<ReservationEntity>,
   ): Promise<ReservationEntity>;
   delete(id: string): Promise<void>;
-  findOverlappingReservations(
-    userId: string,
-    carId: string,
-    startDate: Date,
-    endDate: Date,
-    excludeReservationId?: string,
-  ): Promise<{ hasUserOverlap: boolean; hasCarOverlap: boolean }>;
+  createWithCarLock(data: ReservationEntity): Promise<ReservationEntity>;
+  updateWithCarLock(
+    id: string,
+    data: Partial<ReservationEntity>,
+  ): Promise<ReservationEntity>;
 }
