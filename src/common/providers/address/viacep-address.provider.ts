@@ -17,11 +17,11 @@ export class ViaCepAddressProvider implements IAddressProvider {
       const response = await axios.get<ViaCepResponse>(
         `https://viacep.com.br/ws/${cep}/json/`,
       );
-      
+
       if (response.data.erro) {
         return null;
       }
-      
+
       return {
         street: response.data.logradouro,
         neighborhood: response.data.bairro,

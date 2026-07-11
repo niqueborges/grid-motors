@@ -51,7 +51,9 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   @IsString()
-  @Matches(/^\d{5}-?\d{3}$/, { message: 'cep must match the format XXXXXXXX or XXXXX-XXX' })
+  @Matches(/^\d{5}-?\d{3}$/, {
+    message: 'cep must match the format XXXXXXXX or XXXXX-XXX',
+  })
   cep: string;
 
   @ApiProperty({ example: 'yes', description: 'Accepts only yes or no' })

@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import type { IUsersRepository } from './repositories/users.repository';
 import type { IAddressProvider } from '../common/providers/address/address-provider.interface';
+import { UserEntity } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -23,7 +24,9 @@ export class UsersService {
     const birthDate = new Date(Number(year), Number(month) - 1, Number(day));
 
     // CEP lookup using the injected provider
-    const addressData = await this.addressProvider.getAddressByCep(createUserDto.cep);
+    const addressData = await this.addressProvider.getAddressByCep(
+      createUserDto.cep,
+    );
     if (!addressData) {
       throw new BadRequestException('Invalid CEP or failed to fetch address');
     }
@@ -67,7 +70,7 @@ export class UsersService {
     }
     return user;
   }
-  
+
   async findByEmail(email: string) {
     const user = await this.usersRepository.findByEmail(email);
     if (!user) {
@@ -95,7 +98,7 @@ export class UsersService {
       }
     }
 
-    const dataToUpdate: any = {};
+    const dataToUpdate: Partial<UserEntity> = {};
     const dto = updateUserDto as Partial<CreateUserDto>;
 
     if (dto.name) dataToUpdate.name = dto.name;

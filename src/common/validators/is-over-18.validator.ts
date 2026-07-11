@@ -29,7 +29,7 @@ export class IsOver18Constraint implements ValidatorConstraintInterface {
 }
 
 export function IsOver18(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
