@@ -1,4 +1,9 @@
-import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { FindReservationsQueryDto } from './dto/find-reservations.query.dto';
@@ -26,28 +31,35 @@ export class ReservationsService {
     excludeReservationId?: string,
   ) {
     if (startDate > endDate) {
-      throw new BadRequestException('Start date must be before or equal to end date');
+      throw new BadRequestException(
+        'Start date must be before or equal to end date',
+      );
     }
 
     const user = await this.usersRepository.findById(userId);
     if (!user) throw new NotFoundException('User not found');
     if (user.qualified !== 'yes') {
-      throw new BadRequestException('User is not qualified to make a reservation');
+      throw new BadRequestException(
+        'User is not qualified to make a reservation',
+      );
     }
 
     const car = await this.carsRepository.findById(carId);
     if (!car) throw new NotFoundException('Car not found');
 
-    const overlap = await this.reservationsRepository.findOverlappingReservations(
-      userId,
-      carId,
-      startDate,
-      endDate,
-      excludeReservationId,
-    );
+    const overlap =
+      await this.reservationsRepository.findOverlappingReservations(
+        userId,
+        carId,
+        startDate,
+        endDate,
+        excludeReservationId,
+      );
 
     if (overlap.hasUserOverlap) {
-      throw new BadRequestException('User already has a reservation in this period');
+      throw new BadRequestException(
+        'User already has a reservation in this period',
+      );
     }
     if (overlap.hasCarOverlap) {
       throw new BadRequestException('Car is already reserved in this period');
@@ -63,7 +75,10 @@ export class ReservationsService {
     return finalValue;
   }
 
-  async create(createReservationDto: CreateReservationDto, userId: string): Promise<ReservationEntity> {
+  async create(
+    createReservationDto: CreateReservationDto,
+    userId: string,
+  ): Promise<ReservationEntity> {
     const final_value = await this.calculateFinalValueAndCheckOverlap(
       userId,
       createReservationDto.id_car,
@@ -94,7 +109,10 @@ export class ReservationsService {
     return reservation;
   }
 
-  async update(id: string, updateReservationDto: UpdateReservationDto): Promise<ReservationEntity> {
+  async update(
+    id: string,
+    updateReservationDto: UpdateReservationDto,
+  ): Promise<ReservationEntity> {
     const existing = await this.findOne(id);
 
     const startDate = updateReservationDto.start_date || existing.start_date;
@@ -103,7 +121,11 @@ export class ReservationsService {
 
     let final_value = existing.final_value;
 
-    if (updateReservationDto.start_date || updateReservationDto.end_date || updateReservationDto.id_car) {
+    if (
+      updateReservationDto.start_date ||
+      updateReservationDto.end_date ||
+      updateReservationDto.id_car
+    ) {
       final_value = await this.calculateFinalValueAndCheckOverlap(
         existing.userId,
         carId,

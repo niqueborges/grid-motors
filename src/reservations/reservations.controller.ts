@@ -17,7 +17,12 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { FindReservationsQueryDto } from './dto/find-reservations.query.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Reservations')
 @ApiBearerAuth()
@@ -29,7 +34,10 @@ export class ReservationsController {
   @Post()
   @ApiOperation({ summary: 'Create a new reservation' })
   @ApiResponse({ status: 201, description: 'Reservation created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad Request / Business Rule Validation Failed' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request / Business Rule Validation Failed',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Body() createReservationDto: CreateReservationDto, @Req() req: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -54,7 +62,10 @@ export class ReservationsController {
   @ApiOperation({ summary: 'Update a reservation' })
   @ApiResponse({ status: 404, description: 'Reservation not found' })
   @ApiResponse({ status: 400, description: 'Business Rule Validation Failed' })
-  update(@Param('id') id: string, @Body() updateReservationDto: UpdateReservationDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateReservationDto: UpdateReservationDto,
+  ) {
     return this.reservationsService.update(id, updateReservationDto);
   }
 
