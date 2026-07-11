@@ -42,7 +42,7 @@ describe('UsersController', () => {
         password: 'pass',
         birth: '01/01/2000',
         cep: '12345678',
-        qualified: 'yes'
+        qualified: 'yes',
       };
       const result = { id: '1', ...createDto };
       mockUsersService.create.mockResolvedValue(result);

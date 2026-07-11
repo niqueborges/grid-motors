@@ -76,30 +76,46 @@ describe('UsersService', () => {
       mockAddressProvider.getAddressByCep.mockResolvedValue(mockAddress);
       mockUsersRepository.findByEmailOrCpf.mockResolvedValue(null);
       mockHashProvider.hash.mockResolvedValue('hashedPassword');
-      
-      const expectedUser = { id: '1', ...validCreateDto, password: 'hashedPassword', birth: new Date(1990, 0, 1), ...mockAddress };
+
+      const expectedUser = {
+        id: '1',
+        ...validCreateDto,
+        password: 'hashedPassword',
+        birth: new Date(1990, 0, 1),
+        ...mockAddress,
+      };
       mockUsersRepository.create.mockResolvedValue(expectedUser);
 
       const result = await service.create(validCreateDto);
 
       expect(result).toEqual(expectedUser);
-      expect(mockAddressProvider.getAddressByCep).toHaveBeenCalledWith(validCreateDto.cep);
-      expect(mockHashProvider.hash).toHaveBeenCalledWith(validCreateDto.password);
+      expect(mockAddressProvider.getAddressByCep).toHaveBeenCalledWith(
+        validCreateDto.cep,
+      );
+      expect(mockHashProvider.hash).toHaveBeenCalledWith(
+        validCreateDto.password,
+      );
       expect(mockUsersRepository.create).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if CEP is invalid', async () => {
       mockAddressProvider.getAddressByCep.mockResolvedValue(null);
 
-      await expect(service.create(validCreateDto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(validCreateDto)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(mockUsersRepository.create).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if user email or cpf already exists', async () => {
       mockAddressProvider.getAddressByCep.mockResolvedValue(mockAddress);
-      mockUsersRepository.findByEmailOrCpf.mockResolvedValue({ id: 'existing' });
+      mockUsersRepository.findByEmailOrCpf.mockResolvedValue({
+        id: 'existing',
+      });
 
-      await expect(service.create(validCreateDto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(validCreateDto)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(mockUsersRepository.create).not.toHaveBeenCalled();
     });
   });
@@ -127,28 +143,37 @@ describe('UsersService', () => {
 
   describe('findByEmail', () => {
     it('should return a user if found', async () => {
-      mockUsersRepository.findByEmail.mockResolvedValue({ id: '1', email: 'a@a.com' });
+      mockUsersRepository.findByEmail.mockResolvedValue({
+        id: '1',
+        email: 'a@a.com',
+      });
       const result = await service.findByEmail('a@a.com');
       expect(result).toEqual({ id: '1', email: 'a@a.com' });
     });
 
     it('should throw NotFoundException if user is not found by email', async () => {
       mockUsersRepository.findByEmail.mockResolvedValue(null);
-      await expect(service.findByEmail('a@a.com')).rejects.toThrow(NotFoundException);
+      await expect(service.findByEmail('a@a.com')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('update', () => {
     it('should throw NotFoundException if user to update does not exist', async () => {
       mockUsersRepository.findById.mockResolvedValue(null);
-      await expect(service.update('1', { name: 'test' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('1', { name: 'test' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException if new email/cpf belongs to another user', async () => {
       mockUsersRepository.findById.mockResolvedValue({ id: '1' });
       mockUsersRepository.findByEmailOrCpf.mockResolvedValue({ id: '2' });
-      
-      await expect(service.update('1', { email: 'test@example.com' })).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.update('1', { email: 'test@example.com' }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should update user successfully', async () => {
@@ -156,7 +181,7 @@ describe('UsersService', () => {
       mockUsersRepository.findByEmailOrCpf.mockResolvedValue(null);
       mockAddressProvider.getAddressByCep.mockResolvedValue(mockAddress);
       mockHashProvider.hash.mockResolvedValue('newHashed');
-      
+
       const updateDto: UpdateUserDto = {
         name: 'New Name',
         password: 'newPass',
@@ -169,15 +194,20 @@ describe('UsersService', () => {
 
       const result = await service.update('1', updateDto);
       expect(result).toEqual(expectedUpdated);
-      expect(mockUsersRepository.update).toHaveBeenCalledWith('1', expect.any(Object));
+      expect(mockUsersRepository.update).toHaveBeenCalledWith(
+        '1',
+        expect.any(Object),
+      );
     });
 
     it('should throw BadRequestException if update cep is invalid', async () => {
       mockUsersRepository.findById.mockResolvedValue({ id: '1' });
       mockUsersRepository.findByEmailOrCpf.mockResolvedValue(null);
       mockAddressProvider.getAddressByCep.mockResolvedValue(null);
-      
-      await expect(service.update('1', { cep: 'invalid' })).rejects.toThrow(BadRequestException);
+
+      await expect(service.update('1', { cep: 'invalid' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

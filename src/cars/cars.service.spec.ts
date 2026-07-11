@@ -94,16 +94,23 @@ describe('CarsService', () => {
   describe('update', () => {
     it('should update a car if found', async () => {
       mockCarsRepository.findById.mockResolvedValue({ id: '1' });
-      mockCarsRepository.update.mockResolvedValue({ id: '1', model: 'Updated' });
+      mockCarsRepository.update.mockResolvedValue({
+        id: '1',
+        model: 'Updated',
+      });
 
       const result = await service.update('1', { model: 'Updated' });
       expect(result).toEqual({ id: '1', model: 'Updated' });
-      expect(mockCarsRepository.update).toHaveBeenCalledWith('1', { model: 'Updated' });
+      expect(mockCarsRepository.update).toHaveBeenCalledWith('1', {
+        model: 'Updated',
+      });
     });
 
     it('should throw NotFoundException if car to update does not exist', async () => {
       mockCarsRepository.findById.mockResolvedValue(null);
-      await expect(service.update('1', { model: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('1', { model: 'Updated' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -129,12 +136,17 @@ describe('CarsService', () => {
 
       const result = await service.updateAccessory('1', { description: 'GPS' });
       expect(result).toEqual({ id: '1' });
-      expect(mockCarsRepository.updateAccessories).toHaveBeenCalledWith('1', 'GPS');
+      expect(mockCarsRepository.updateAccessories).toHaveBeenCalledWith(
+        '1',
+        'GPS',
+      );
     });
 
     it('should throw NotFoundException if car not found when updating accessory', async () => {
       mockCarsRepository.findById.mockResolvedValue(null);
-      await expect(service.updateAccessory('1', { description: 'GPS' })).rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateAccessory('1', { description: 'GPS' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });
