@@ -20,7 +20,9 @@ export class CarsService {
       year: createCarDto.year,
       value_per_day: createCarDto.value_per_day,
       number_of_passengers: createCarDto.number_of_passengers,
-      accessories: createCarDto.accessories.map((a) => ({ description: a.description })),
+      accessories: createCarDto.accessories.map((a) => ({
+        description: a.description,
+      })),
     };
     return this.carsRepository.create(carEntity);
   }
@@ -49,9 +51,15 @@ export class CarsService {
     return this.carsRepository.delete(id);
   }
 
-  async updateAccessory(carId: string, updateAccessoryDto: UpdateAccessoryDto): Promise<CarEntity> {
+  async updateAccessory(
+    carId: string,
+    updateAccessoryDto: UpdateAccessoryDto,
+  ): Promise<CarEntity> {
     // Check if exists
     await this.findOne(carId);
-    return this.carsRepository.updateAccessories(carId, updateAccessoryDto.description);
+    return this.carsRepository.updateAccessories(
+      carId,
+      updateAccessoryDto.description,
+    );
   }
 }

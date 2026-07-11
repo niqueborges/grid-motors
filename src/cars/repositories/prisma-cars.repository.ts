@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { ICarsRepository, PaginatedCarsResult } from './cars.repository.interface';
+import {
+  ICarsRepository,
+  PaginatedCarsResult,
+} from './cars.repository.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CarEntity } from '../entities/car.entity';
 import { FindCarsQueryDto } from '../dto/find-cars.query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaCarsRepository implements ICarsRepository {
@@ -17,7 +21,9 @@ export class PrismaCarsRepository implements ICarsRepository {
         value_per_day: data.value_per_day,
         number_of_passengers: data.number_of_passengers,
         accessories: {
-          create: data.accessories.map((acc) => ({ description: acc.description })),
+          create: data.accessories.map((acc) => ({
+            description: acc.description,
+          })),
         },
       },
       include: { accessories: true },
@@ -27,12 +33,15 @@ export class PrismaCarsRepository implements ICarsRepository {
   async findAll(query: FindCarsQueryDto): Promise<PaginatedCarsResult> {
     const { limit = 10, offset = 0, ...filters } = query;
 
-    const where: any = {};
-    if (filters.model) where.model = { contains: filters.model, mode: 'insensitive' };
-    if (filters.color) where.color = { contains: filters.color, mode: 'insensitive' };
+    const where: Prisma.CarWhereInput = {};
+    if (filters.model)
+      where.model = { contains: filters.model, mode: 'insensitive' };
+    if (filters.color)
+      where.color = { contains: filters.color, mode: 'insensitive' };
     if (filters.year) where.year = filters.year;
     if (filters.value_per_day) where.value_per_day = filters.value_per_day;
-    if (filters.number_of_passengers) where.number_of_passengers = filters.number_of_passengers;
+    if (filters.number_of_passengers)
+      where.number_of_passengers = filters.number_of_passengers;
 
     const [cars, total] = await Promise.all([
       this.prisma.car.findMany({
@@ -63,7 +72,7 @@ export class PrismaCarsRepository implements ICarsRepository {
   }
 
   async update(id: string, data: Partial<CarEntity>): Promise<CarEntity> {
-    // Note: accessories update here only handles scalar fields of car in this challenge usually, 
+    // Note: accessories update here only handles scalar fields of car in this challenge usually,
     // but if accessories are provided we would need to replace them. The challenge has a specific route for accessories.
     const { accessories, ...rest } = data;
     return this.prisma.car.update({
@@ -79,7 +88,10 @@ export class PrismaCarsRepository implements ICarsRepository {
     });
   }
 
-  async updateAccessories(carId: string, description: string): Promise<CarEntity> {
+  async updateAccessories(
+    carId: string,
+    description: string,
+  ): Promise<CarEntity> {
     const car = await this.prisma.car.findUnique({
       where: { id: carId },
       include: { accessories: true },

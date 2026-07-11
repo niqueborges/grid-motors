@@ -8,8 +8,7 @@ import {
 
 @ValidatorConstraint({ async: false })
 export class IsUniqueArrayConstraint implements ValidatorConstraintInterface {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  validate(value: unknown, args: ValidationArguments) {
+  validate(value: unknown, args: ValidationArguments): boolean {
     if (!Array.isArray(value)) return false;
 
     // We assume array of objects with a 'description' property based on args.property or a fixed logic.
@@ -28,7 +27,10 @@ export class IsUniqueArrayConstraint implements ValidatorConstraintInterface {
   }
 }
 
-export function IsUniqueArray(property: string, validationOptions?: ValidationOptions) {
+export function IsUniqueArray(
+  property: string,
+  validationOptions?: ValidationOptions,
+) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
