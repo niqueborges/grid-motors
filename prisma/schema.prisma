@@ -12,8 +12,24 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-}
+  id       String   @id @default(uuid()) // Automatically generating UUID
+  name     String
+  cpf      String   @unique
+  birth    DateTime // Best practice: store as DateTime. We will convert the "03/03/2000" string in the DTO later.
+  email    String   @unique
+  password String
+  cep      String
 
+  // Extra fields to store the address that will come from ViaCEP
+  street       String?
+  neighborhood String?
+  city         String?
+  state        String?
+
+  qualified String
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("users") // Maps the table name in Postgres to lowercase and plural
+}

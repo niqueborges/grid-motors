@@ -40,4 +40,5 @@ yarn-error.log*
 .npm
 .yarn-integrity
 
-
+# Prisma
+/generated/prisma
