@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       String   @id @default(uuid()) // Automatically generating UUID
+  name     String
+  cpf      String   @unique
+  birth    DateTime // Best practice: store as DateTime. We will convert the "03/03/2000" string in the DTO later.
+  email    String   @unique
+  password String
+  cep      String
+
+  // Extra fields to store the address that will come from ViaCEP
+  street       String?
+  neighborhood String?
+  city         String?
+  state        String?
+
+  qualified String
+
+  // Audit control
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+
+  @@map("users") // Maps the table name in Postgres to lowercase and plural
+}
+
+// ==========================================
+// MODEL: Car
+// ==========================================
+model Car {
+  id                   String @id @default(uuid())
+  model                String
+  color                String
+  year                 Int
+  value_per_day        Float
+  number_of_passengers Int
+
+  accessories Accessory[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+
+  @@map("cars")
+}
+
+// ==========================================
+// MODEL: Accessory
+// ==========================================
+model Accessory {
+  id          String @id @default(uuid())
+  description String
+
+  car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+  carId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accessories")
+}
+
+// ==========================================
+// MODEL: Reservation
+// ==========================================
+model Reservation {
+  id          String   @id @default(uuid())
+  start_date  DateTime
+  end_date    DateTime
+  final_value Float
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  car   Car    @relation(fields: [carId], references: [id])
+  carId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reservations")
+}
