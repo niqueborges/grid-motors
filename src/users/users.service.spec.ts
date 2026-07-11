@@ -13,6 +13,10 @@ describe('UsersService', () => {
     delete: jest.fn(),
   };
 
+  const mockAddressProvider = {
+    getAddressByCep: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -20,6 +24,10 @@ describe('UsersService', () => {
         {
           provide: 'IUsersRepository',
           useValue: mockUsersRepository,
+        },
+        {
+          provide: 'IAddressProvider',
+          useValue: mockAddressProvider,
         },
       ],
     }).compile();
