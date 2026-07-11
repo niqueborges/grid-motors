@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { IHashProvider } from '../common/providers/hash/hash-provider.interface';
 import { LoginDto } from './dto/login.dto';
 
-import { User } from '@prisma/client';
+import { UserEntity } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +18,7 @@ export class AuthService {
   async validateUser(
     email: string,
     pass: string,
-  ): Promise<Omit<User, 'password'> | null> {
+  ): Promise<Omit<UserEntity, 'password'> | null> {
     const user = await this.usersService.findByEmail(email);
     if (user && (await this.hashProvider.compare(pass, user.password))) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
