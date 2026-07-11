@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
 import { FindCarsQueryDto } from './dto/find-cars.query.dto';
-import { ICarsRepository } from './repositories/cars.repository.interface';
+import type { ICarsRepository } from './repositories/cars.repository.interface';
 import { CarEntity } from './entities/car.entity';
 import { UpdateAccessoryDto } from './dto/update-accessory.dto';
 
