@@ -44,7 +44,7 @@ Create a `.env` file in the root of the project, based on the `.env.example`:
 
 ```env
 PORT=3000
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/grid_motors?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/grid_motors?schema=public"
 JWT_SECRET="your-super-secret-jwt-key"
 ```
 
@@ -55,8 +55,8 @@ This is the recommended way to run the project. You only need Docker installed.
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/niqueborges/grid-motors.git
-   cd grid-motors
+   git clone https://github.com/niqueborges/grid-motors-api.git
+   cd grid-motors-api
    ```
 2. **Run Docker Compose**
 

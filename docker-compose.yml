@@ -1,7 +1,7 @@
 services:
   # --- PostgreSQL Database ---
   db:
-    image: postgres:15-alpine # Uses a lightweight Postgres image
+    image: postgres:15-alpine
     container_name: grid-motors-db
     restart: always
     environment:
@@ -12,3 +12,19 @@ services:
       - "5433:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+
+  # --- API Container ---
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grid-motors-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/grid_motors?schema=public
+      - JWT_SECRET=${JWT_SECRET:-super_secret_key_for_the_challenge}
+    command: sh -c "npx prisma migrate deploy && npm run start:dev"
+    depends_on:
+      - db
