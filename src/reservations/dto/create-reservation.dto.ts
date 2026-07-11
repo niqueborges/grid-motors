@@ -3,13 +3,19 @@ import { IsDate, IsNotEmpty, IsUUID } from 'class-validator';
 import { TransformDateDDMMYYYY } from '../../common/transforms/date.transform';
 
 export class CreateReservationDto {
-  @ApiProperty({ example: '20/04/2023', description: 'Start date in DD/MM/YYYY format' })
+  @ApiProperty({
+    example: '20/04/2023',
+    description: 'Start date in DD/MM/YYYY format',
+  })
   @TransformDateDDMMYYYY()
   @IsDate()
   @IsNotEmpty()
   start_date: Date;
 
-  @ApiProperty({ example: '30/04/2023', description: 'End date in DD/MM/YYYY format' })
+  @ApiProperty({
+    example: '30/04/2023',
+    description: 'End date in DD/MM/YYYY format',
+  })
   @TransformDateDDMMYYYY()
   @IsDate()
   @IsNotEmpty()
