@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { IReservationsRepository, PaginatedReservationsResult } from './reservations.repository.interface';
+import {
+  IReservationsRepository,
+  PaginatedReservationsResult,
+} from './reservations.repository.interface';
 import { ReservationEntity } from '../entities/reservation.entity';
 import { FindReservationsQueryDto } from '../dto/find-reservations.query.dto';
 import { Prisma } from '@prisma/client';
@@ -21,7 +24,9 @@ export class PrismaReservationsRepository implements IReservationsRepository {
     });
   }
 
-  async findAll(query: FindReservationsQueryDto): Promise<PaginatedReservationsResult> {
+  async findAll(
+    query: FindReservationsQueryDto,
+  ): Promise<PaginatedReservationsResult> {
     const { limit = 10, offset = 0, ...filters } = query;
 
     const where: Prisma.ReservationWhereInput = {};
@@ -57,7 +62,10 @@ export class PrismaReservationsRepository implements IReservationsRepository {
     });
   }
 
-  async update(id: string, data: Partial<ReservationEntity>): Promise<ReservationEntity> {
+  async update(
+    id: string,
+    data: Partial<ReservationEntity>,
+  ): Promise<ReservationEntity> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id: _id, createdAt, updatedAt, ...rest } = data;
     return this.prisma.reservation.update({

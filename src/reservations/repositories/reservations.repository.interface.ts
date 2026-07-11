@@ -11,9 +11,14 @@ export interface PaginatedReservationsResult {
 
 export interface IReservationsRepository {
   create(data: ReservationEntity): Promise<ReservationEntity>;
-  findAll(query: FindReservationsQueryDto): Promise<PaginatedReservationsResult>;
+  findAll(
+    query: FindReservationsQueryDto,
+  ): Promise<PaginatedReservationsResult>;
   findById(id: string): Promise<ReservationEntity | null>;
-  update(id: string, data: Partial<ReservationEntity>): Promise<ReservationEntity>;
+  update(
+    id: string,
+    data: Partial<ReservationEntity>,
+  ): Promise<ReservationEntity>;
   delete(id: string): Promise<void>;
   findOverlappingReservations(
     userId: string,
