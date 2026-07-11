@@ -2,7 +2,7 @@ import { Transform } from 'class-transformer';
 
 export const TransformDateDDMMYYYY = () =>
   Transform(({ value }) => {
-    if (typeof value !== 'string') return value;
+    if (typeof value !== 'string') return value as unknown;
     const parts = value.split('/');
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
@@ -13,5 +13,5 @@ export const TransformDateDDMMYYYY = () =>
         return date;
       }
     }
-    return value;
+    return value as unknown;
   });
