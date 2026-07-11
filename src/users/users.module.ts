@@ -14,6 +14,6 @@ import { ProvidersModule } from '../common/providers/providers.module';
       useClass: PrismaUsersRepository,
     },
   ],
-  exports: [UsersService],
+  exports: [UsersService, 'IUsersRepository'],
 })
 export class UsersModule {}
