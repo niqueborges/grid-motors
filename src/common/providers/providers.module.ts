@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ViaCepAddressProvider } from './address/viacep-address.provider';
+import { BcryptHashProvider } from './hash/bcrypt-hash.provider';
 
 @Module({
   providers: [
@@ -7,7 +8,11 @@ import { ViaCepAddressProvider } from './address/viacep-address.provider';
       provide: 'IAddressProvider',
       useClass: ViaCepAddressProvider,
     },
+    {
+      provide: 'IHashProvider',
+      useClass: BcryptHashProvider,
+    },
   ],
-  exports: ['IAddressProvider'],
+  exports: ['IAddressProvider', 'IHashProvider'],
 })
 export class ProvidersModule {}
