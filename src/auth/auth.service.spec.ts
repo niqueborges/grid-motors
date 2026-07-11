@@ -88,7 +88,10 @@ describe('AuthService', () => {
         email: 'test@test.com',
         password: 'password123',
       });
-      expect(result).toEqual({ access_token: 'fake-token', refresh_token: 'fake-token' });
+      expect(result).toEqual({
+        access_token: 'fake-token',
+        refresh_token: 'fake-token',
+      });
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jwtService.sign).toHaveBeenCalledWith({

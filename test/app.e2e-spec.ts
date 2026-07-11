@@ -13,7 +13,7 @@ describe('Grid Motors API (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(
       new ValidationPipe({
@@ -22,14 +22,12 @@ describe('Grid Motors API (e2e)', () => {
         transform: true,
       }),
     );
-    
+
     await app.init();
   });
 
   it('/api/v1/cars (GET) - should require authentication', () => {
-    return request(app.getHttpServer())
-      .get('/api/v1/cars')
-      .expect(401);
+    return request(app.getHttpServer()).get('/api/v1/cars').expect(401);
   });
 
   afterAll(async () => {

@@ -65,7 +65,9 @@ describe('ReservationsService', () => {
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
       mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
       const mockResult = { id: 'res-1', final_value: 200 };
-      mockReservationsRepository.createWithCarLock.mockResolvedValue(mockResult);
+      mockReservationsRepository.createWithCarLock.mockResolvedValue(
+        mockResult,
+      );
 
       const result = await service.create(
         {

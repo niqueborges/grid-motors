@@ -11,10 +11,12 @@ import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{
-      ttl: 10000,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 10000,
+        limit: 10,
+      },
+    ]),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: async () => ({
