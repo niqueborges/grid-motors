@@ -33,3 +33,38 @@ model User {
 
   @@map("users") // Maps the table name in Postgres to lowercase and plural
 }
+
+// ==========================================
+// MODEL: Car
+// ==========================================
+model Car {
+  id                   String @id @default(uuid())
+  model                String
+  color                String
+  year                 Int
+  value_per_day        Float
+  number_of_passengers Int
+
+  accessories Accessory[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("cars")
+}
+
+// ==========================================
+// MODEL: Accessory
+// ==========================================
+model Accessory {
+  id          String @id @default(uuid())
+  description String
+
+  car   Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+  carId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accessories")
+}
