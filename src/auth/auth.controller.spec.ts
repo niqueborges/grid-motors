@@ -32,7 +32,7 @@ describe('AuthController', () => {
   describe('login', () => {
     it('should call authService.login and return the token', async () => {
       const loginDto = { email: 'test@test.com', password: 'password123' };
-      const expectedResult = { access_token: 'fake-token' };
+      const expectedResult = { access_token: 'fake-token', refresh_token: 'fake-token' };
 
       mockAuthService.login.mockResolvedValue(expectedResult);
 

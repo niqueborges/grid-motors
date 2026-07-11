@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { UserEntity } from '../users/entities/user.entity';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -81,14 +81,14 @@ describe('AuthService', () => {
       jest.spyOn(service, 'validateUser').mockResolvedValue({
         id: '1',
         email: 'test@test.com',
-      } as unknown as Omit<User, 'password'>);
+      } as unknown as Omit<UserEntity, 'password'>);
       mockJwtService.sign.mockReturnValue('fake-token');
 
       const result = await service.login({
         email: 'test@test.com',
         password: 'password123',
       });
-      expect(result).toEqual({ access_token: 'fake-token' });
+      expect(result).toEqual({ access_token: 'fake-token', refresh_token: 'fake-token' });
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jwtService.sign).toHaveBeenCalledWith({

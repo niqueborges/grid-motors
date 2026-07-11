@@ -28,6 +28,16 @@ export class AuthService {
     return null;
   }
 
+  private generateTokens(email: string, sub: string) {
+    const payload = { email, sub };
+    const refreshPayload = { ...payload, type: 'refresh' };
+    
+    return {
+      access_token: this.jwtService.sign(payload),
+      refresh_token: this.jwtService.sign(refreshPayload, { expiresIn: '7d' }),
+    };
+  }
+
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
 
@@ -37,9 +47,24 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    return this.generateTokens(user.email, user.id);
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken);
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+      
+      const user = await this.usersService.findOne(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return this.generateTokens(user.email, user.id);
+    } catch (e) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }
