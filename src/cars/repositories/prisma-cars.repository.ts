@@ -74,6 +74,7 @@ export class PrismaCarsRepository implements ICarsRepository {
   async update(id: string, data: Partial<CarEntity>): Promise<CarEntity> {
     // Note: accessories update here only handles scalar fields of car in this challenge usually,
     // but if accessories are provided we would need to replace them. The challenge has a specific route for accessories.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { accessories, ...rest } = data;
     return this.prisma.car.update({
       where: { id },

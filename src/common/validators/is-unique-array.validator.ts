@@ -15,7 +15,11 @@ export class IsUniqueArrayConstraint implements ValidatorConstraintInterface {
     // To make it generic, we can take the property name to check from args.constraints.
     const propName = args.constraints[0] as string;
 
-    const values = value.map((item) => (typeof item === 'object' && item !== null ? (item as Record<string, unknown>)[propName] : item));
+    const values = value.map((item: unknown) =>
+      typeof item === 'object' && item !== null
+        ? (item as Record<string, unknown>)[propName]
+        : item,
+    );
     const uniqueValues = new Set(values);
 
     return uniqueValues.size === values.length;
