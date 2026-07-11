@@ -37,19 +37,29 @@ describe('ReservationsController', () => {
 
   describe('create', () => {
     it('should create a reservation', async () => {
-      const dto = { start_date: new Date(), end_date: new Date(), id_car: 'car-1' };
+      const dto = {
+        start_date: new Date(),
+        end_date: new Date(),
+        id_car: 'car-1',
+      };
       const req = { user: { id: 'user-1' } };
       mockReservationsService.create.mockResolvedValue({ id: 'res-1' });
 
       const result = await controller.create(dto, req);
       expect(result).toEqual({ id: 'res-1' });
-      expect(mockReservationsService.create).toHaveBeenCalledWith(dto, 'user-1');
+      expect(mockReservationsService.create).toHaveBeenCalledWith(
+        dto,
+        'user-1',
+      );
     });
   });
 
   describe('findAll', () => {
     it('should return all reservations', async () => {
-      mockReservationsService.findAll.mockResolvedValue({ reserves: [], total: 0 });
+      mockReservationsService.findAll.mockResolvedValue({
+        reserves: [],
+        total: 0,
+      });
       const result = await controller.findAll({});
       expect(result).toEqual({ reserves: [], total: 0 });
     });
@@ -66,7 +76,9 @@ describe('ReservationsController', () => {
   describe('update', () => {
     it('should update a reservation', async () => {
       mockReservationsService.update.mockResolvedValue({ id: 'res-1' });
-      const result = await controller.update('res-1', { start_date: new Date() });
+      const result = await controller.update('res-1', {
+        start_date: new Date(),
+      });
       expect(result).toEqual({ id: 'res-1' });
     });
   });

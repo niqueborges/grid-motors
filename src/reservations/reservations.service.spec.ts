@@ -52,7 +52,11 @@ describe('ReservationsService', () => {
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'no' });
       await expect(
         service.create(
-          { start_date: new Date('2023-01-01'), end_date: new Date('2023-01-02'), id_car: 'car-1' },
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-02'),
+            id_car: 'car-1',
+          },
           'user-1',
         ),
       ).rejects.toThrow('User is not qualified to make a reservation');
@@ -61,26 +65,41 @@ describe('ReservationsService', () => {
     it('should create a reservation successfully', async () => {
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
       mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
-      mockReservationsRepository.findOverlappingReservations.mockResolvedValue({ hasUserOverlap: false, hasCarOverlap: false });
-      
+      mockReservationsRepository.findOverlappingReservations.mockResolvedValue({
+        hasUserOverlap: false,
+        hasCarOverlap: false,
+      });
+
       const mockResult = { id: 'res-1', final_value: 200 };
       mockReservationsRepository.create.mockResolvedValue(mockResult);
 
       const result = await service.create(
-        { start_date: new Date('2023-01-01'), end_date: new Date('2023-01-02'), id_car: 'car-1' },
+        {
+          start_date: new Date('2023-01-01'),
+          end_date: new Date('2023-01-02'),
+          id_car: 'car-1',
+        },
         'user-1',
       );
 
       expect(result).toEqual(mockResult);
-      expect(mockReservationsRepository.create).toHaveBeenCalledWith(expect.objectContaining({
-        final_value: 200, // 2 days * 100
-      }));
+      expect(mockReservationsRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          final_value: 200, // 2 days * 100
+        }),
+      );
     });
   });
 
   describe('findAll', () => {
     it('should return paginated reservations', async () => {
-      const mockResult = { reserves: [], total: 0, limit: 10, offset: 0, offsets: 0 };
+      const mockResult = {
+        reserves: [],
+        total: 0,
+        limit: 10,
+        offset: 0,
+        offsets: 0,
+      };
       mockReservationsRepository.findAll.mockResolvedValue(mockResult);
 
       const result = await service.findAll({});
@@ -91,7 +110,9 @@ describe('ReservationsService', () => {
   describe('findOne', () => {
     it('should throw NotFoundException if not found', async () => {
       mockReservationsRepository.findById.mockResolvedValue(null);
-      await expect(service.findOne('invalid')).rejects.toThrow('Reservation with ID invalid not found');
+      await expect(service.findOne('invalid')).rejects.toThrow(
+        'Reservation with ID invalid not found',
+      );
     });
 
     it('should return reservation', async () => {
@@ -114,12 +135,18 @@ describe('ReservationsService', () => {
       mockReservationsRepository.findById.mockResolvedValue(existing);
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
       mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
-      mockReservationsRepository.findOverlappingReservations.mockResolvedValue({ hasUserOverlap: false, hasCarOverlap: false });
-      
+      mockReservationsRepository.findOverlappingReservations.mockResolvedValue({
+        hasUserOverlap: false,
+        hasCarOverlap: false,
+      });
+
       const updated = { ...existing, final_value: 300 };
       mockReservationsRepository.update.mockResolvedValue(updated);
 
-      const result = await service.update('res-1', { start_date: new Date('2023-01-01'), end_date: new Date('2023-01-03') });
+      const result = await service.update('res-1', {
+        start_date: new Date('2023-01-01'),
+        end_date: new Date('2023-01-03'),
+      });
       expect(result).toEqual(updated);
     });
   });
