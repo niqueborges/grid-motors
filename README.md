@@ -3,7 +3,7 @@
 RESTful API developed as the final project for the Challenge | Bootcamp - AWS AI FDE BACK-END JOURNEY NODE.JS - AI/R BELONG_ABR26.
 The system allows the management of car rentals, including users, cars, accessories, and reservations with complex business rules.
 
-[![CI](https://github.com/niqueborges/grid-motors-api/actions/workflows/ci.yml/badge.svg)](https://github.com/niqueborges/grid-motors-api/actions/workflows/ci.yml)
+[![NestJS CI](https://github.com/niqueborges/grid-motors/actions/workflows/ci.yml/badge.svg)](https://github.com/niqueborges/grid-motors/actions/workflows/ci.yml)
 
 ## 🛠 Technologies
 
@@ -55,8 +55,8 @@ This is the recommended way to run the project. You only need Docker installed.
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/niqueborges/grid-motors-api.git
-   cd grid-motors-api
+   git clone https://github.com/niqueborges/grid-motors.git
+   cd grid-motors
    ```
 2. **Run Docker Compose**
 
