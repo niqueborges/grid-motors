@@ -1,4 +1,3 @@
-
 # Grid Motors
 
 Welcome to the **Grid Motors API**. This is the final project for the Challenge | Bootcamp - AWS AI FDE BACK-END JOURNEY NODE.JS - AI/R BELONG_ABR26.
@@ -95,7 +94,7 @@ docker compose up --build -d
 The API will be available at:
 
 ```
-http://localhost:3000/api/v1
+http://localhost:3000/api/v1/api-docs
 ```
 
 Check running containers:
