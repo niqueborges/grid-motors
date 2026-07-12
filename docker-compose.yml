@@ -27,7 +27,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:-super_secret_key_for_the_challenge}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+    command: sh -c "npx --yes prisma migrate deploy && npm run start:prod"
     depends_on:
       - db
       - redis
