@@ -22,17 +22,17 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/grid_motors?schema=public
-      - JWT_SECRET=${JWT_SECRET:-super_secret_key_for_the_challenge}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+    env_file:
+      - .env
     command: sh -c "npx --yes prisma migrate deploy && npm run start:prod"
     depends_on:
       - db
       - redis
 
+  # --- Redis Cache ---
   redis:
     image: redis:alpine
+    container_name: grid-motors-redis
+    restart: always
     ports:
       - "6379:6379"
