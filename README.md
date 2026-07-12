@@ -1,110 +1,202 @@
+
 # Grid Motors
 
-Welcome to the **Grid Motors** API. This is the final project for the Challenge | Bootcamp - AWS AI FDE BACK-END JOURNEY NODE.JS - AI/R BELONG_ABR26. 
+Welcome to the **Grid Motors API**. This is the final project for the Challenge | Bootcamp - AWS AI FDE BACK-END JOURNEY NODE.JS - AI/R BELONG_ABR26.
 
-The goal of this project is to provide a complete RESTful API to manage car rentals, handling everything from user registration and car inventory to complex reservation rules. 
+The goal of this project is to provide a complete RESTful API for managing car rentals, including user authentication, vehicle inventory, accessories, and reservation management with business rules.
 
 [![NestJS CI](https://github.com/niqueborges/grid-motors/actions/workflows/ci.yml/badge.svg)](https://github.com/niqueborges/grid-motors/actions/workflows/ci.yml)
 
 ## 🛠 What's under the hood?
 
-- **[Node.js](https://nodejs.org/en/)** (v20+) & **[NestJS](https://nestjs.com/)** (v10+)
+- **[Node.js](https://nodejs.org/en/)** (v20+) & **[NestJS](https://nestjs.com/)**
 - **[TypeScript](https://www.typescriptlang.org/)**
 - **[Prisma ORM](https://www.prisma.io/)** with **[PostgreSQL](https://www.postgresql.org/)**
-- **[Redis](https://redis.io/)** for Caching
-- **[Docker & Docker Compose](https://www.docker.com/)**
-- **[Jest](https://jestjs.io/)** for Unit and E2E Testing
-- **[Swagger](https://swagger.io/)** for the API documentation
-- **[Passport & JWT](http://www.passportjs.org/)** for Authentication
+- **[Redis](https://redis.io/)** for caching
+- **[Docker &amp; Docker Compose](https://www.docker.com/)**
+- **[Jest](https://jestjs.io/)** for unit and E2E testing
+- **[Swagger](https://swagger.io/)** for API documentation
+- **[Passport](http://www.passportjs.org/)** and **JWT** for authentication
 
 ## 🏗 Architecture & Folder Structure
 
-The project follows a modular architecture inspired by Clean Architecture principles, ensuring the codebase remains organized and scalable:
+The project follows a modular architecture inspired by Clean Architecture principles, keeping responsibilities separated and the codebase scalable.
 
 ```
 grid-motors/
 ├── prisma/                 # Database schema and migrations
-├── src/                    
-│   ├── auth/               # JWT strategy, guards, and token refresh logic
+├── prisma.config.ts        # Prisma 7 configuration
+├── src/
+│   ├── auth/               # Authentication, JWT strategy and guards
 │   ├── cars/               # Car and accessories management
-│   ├── common/             # Global filters, validators, and custom providers
-│   ├── reservations/       # The core business logic for rentals
-│   ├── users/              # User management and ViaCEP integration
+│   ├── common/             # Global filters, validators and providers
+│   ├── reservations/       # Rental business rules
+│   ├── users/              # User management and external integrations
 │   ├── main.ts             # Application entry point
-│   └── app.module.ts       
-├── test/                   # E2E test setup
+│   └── app.module.ts
+├── test/                   # E2E tests
 ├── .env.example            # Environment variables template
-├── docker-compose.yml      # DB and API containers
-└── Dockerfile              # Multi-stage build for production
+├── docker-compose.yml      # API, PostgreSQL and Redis services
+└── Dockerfile              # Multi-stage production build
 ```
 
 ## 🚀 Running the Project
 
-The easiest way to get this up and running is using Docker.
+### Requirements
 
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/niqueborges/grid-motors.git
-   cd grid-motors
-   ```
+Make sure you have installed:
 
-2. **Set up your environment variables**
-   Create a `.env` file in the root folder based on `.env.example`:
-   ```env
-   PORT=3000
-   DATABASE_URL="postgresql://postgres:postgres@db:5432/grid_motors?schema=public"
-   JWT_SECRET="your-super-secret-jwt-key"
-   ```
+- Node.js 20+
+- Docker Engine
+- Docker Compose V2
 
-3. **Spin up the containers**
-   ```bash
-   docker-compose up --build -d
-   ```
-   *Note: This uses a multi-stage Dockerfile, so it will build a lean production-ready image for the API along with the Postgres database.*
+Check your environment:
 
-The API will be available at `http://localhost:3000/api/v1`.
+```bash
+docker --version
+docker compose version
+node -v
+npm -v
+```
 
-### Running Locally (Without Docker for the API)
+### Using Docker (recommended)
 
-If you prefer to run the Node app locally:
-1. `npm install`
-2. Spin up just the database: `docker-compose up -d db`
-3. Make sure your `.env` points `DATABASE_URL` to `localhost:5433` (the port exposed by docker-compose).
-4. Run migrations: `npx prisma migrate dev`
-5. Start the app: `npm run start:dev`
+1. Clone the repository:
+
+```bash
+git clone https://github.com/niqueborges/grid-motors.git
+cd grid-motors
+```
+
+2. Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+Adjust the variables if necessary.
+
+Example:
+
+```env
+PORT=3000
+DATABASE_URL="postgresql://postgres:postgres@db:5432/grid_motors?schema=public"
+JWT_SECRET="your-super-secret-jwt-key"
+REDIS_HOST=redis
+REDIS_PORT=6379
+```
+
+3. Build and start the containers:
+
+```bash
+docker compose up --build -d
+```
+
+The API will be available at:
+
+```
+http://localhost:3000/api/v1
+```
+
+Check running containers:
+
+```bash
+docker ps
+```
+
+### Running locally (without Docker for the API)
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Start only the infrastructure services:
+
+```bash
+docker compose up -d db redis
+```
+
+3. Update your `.env` for local execution:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/grid_motors?schema=public"
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+Note:
+
+- Inside Docker, the API connects to PostgreSQL through `db:5432`.
+- From your local machine, PostgreSQL is exposed through `localhost:5433`.
+
+4. Run migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+5. Start the application:
+
+```bash
+npm run start:dev
+```
 
 ## 📚 API Documentation
 
-Swagger is configured for easy endpoint testing. Once the app is running, access:
-**[http://localhost:3000/api/v1/api-docs](http://localhost:3000/api/v1/api-docs)**
+Swagger documentation is available at:
 
-A user must be created and authenticated (`POST /api/v1/auth/login`) to obtain a JWT token. Use the "Authorize" button at the top of the Swagger page to inject the token into subsequent requests.
+```
+http://localhost:3000/api/v1/api-docs
+```
+
+Authentication flow:
+
+1. Create a user.
+2. Login through:
+
+```
+POST /api/v1/auth/login
+```
+
+3. Copy the returned JWT token.
+4. Click **Authorize** in Swagger and provide the token.
 
 ![Swagger UI](docs/swagger-ui.png)
 
 ## 🧠 Technical Decisions & Features
 
-Several key design decisions and advanced features were implemented to ensure the system is robust and scalable:
+Key design decisions implemented in the API:
 
-- **Dependency Injection & Repository Pattern:** Business services do not depend directly on Prisma. By using interfaces (like `IUsersRepository`), the domain is decoupled from the ORM.
-- **Rate Limiting:** The API is protected by `@nestjs/throttler` to prevent brute-force attacks and ensure fair usage.
-- **Caching:** Redis is used to cache read-heavy endpoints like the car catalog, significantly improving response times.
-- **Concurrency Control & Overlapping Reservations:** To prevent race conditions when concurrent reservations are made for the same car, database-level locking (`SELECT FOR UPDATE`) is used alongside interactive Prisma transactions. This guarantees data integrity without relying on in-memory locks.
-- **Pre-calculated Final Values:** The `final_value` of a rental is calculated at creation time and stored in the database, acting as a historical snapshot immune to future price changes.
-- **Global Exception Filter:** A custom `AllExceptionsFilter` handles exceptions uniformly, ensuring consistent JSON responses across all endpoints.
-- **Stateless Refresh Tokens:** To maintain secure sessions without forcing frequent re-authentication, the API issues both an `access_token` and a `refresh_token`.
+- **Dependency Injection & Repository Pattern:** Services do not depend directly on Prisma repositories. Interfaces are used to keep business logic decoupled from infrastructure details.
+- **Rate Limiting:** The API uses `@nestjs/throttler` to protect endpoints against excessive requests.
+- **Redis Caching:** Frequently accessed data, such as the car catalog, can be cached to improve performance.
+- **Reservation Concurrency Control:** Reservation creation uses database transactions and locking strategies to prevent conflicting reservations for the same vehicle.
+- **Historical Rental Values:** The final rental amount is stored at reservation creation time, preserving the original calculation even if prices change later.
+- **Global Exception Filter:** A centralized exception handler provides consistent API error responses.
+- **JWT Authentication:** The API uses stateless authentication with access tokens.
 
 ## 🧪 Testing
 
-The project is built with reliability in mind. Unit tests can be executed with:
+Run unit tests:
+
 ```bash
 npm run test
 ```
-To check coverage:
+
+Run coverage:
+
 ```bash
 npm run test:cov
 ```
-There is also a basic E2E setup validating the application bootstrap and global route protection (`npm run test:e2e`).
+
+Run E2E tests:
+
+```bash
+npm run test:e2e
+```
 
 ---
+
 Developed by Monique Borges.
