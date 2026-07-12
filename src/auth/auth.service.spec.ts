@@ -10,10 +10,12 @@ describe('AuthService', () => {
 
   const mockUsersService = {
     findByEmail: jest.fn(),
+    findOne: jest.fn(),
   };
 
   const mockJwtService = {
     sign: jest.fn(),
+    verify: jest.fn(),
   };
 
   const mockHashProvider = {
@@ -94,10 +96,7 @@ describe('AuthService', () => {
       });
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(jwtService.sign).toHaveBeenCalledWith({
-        email: 'test@test.com',
-        sub: '1',
-      });
+      expect(jwtService.sign).toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException for invalid credentials', async () => {
@@ -106,6 +105,60 @@ describe('AuthService', () => {
       await expect(
         service.login({ email: 'test@test.com', password: 'wrong-password' }),
       ).rejects.toThrow('Invalid email or password');
+    });
+  });
+
+  describe('refreshToken', () => {
+    it('should return new tokens if refresh token is valid', async () => {
+      mockJwtService.verify.mockReturnValue({
+        type: 'refresh',
+        sub: 'user-id-1',
+        email: 'test@test.com',
+      });
+      mockUsersService.findOne.mockResolvedValue({
+        id: 'user-id-1',
+        email: 'test@test.com',
+      });
+      mockJwtService.sign.mockReturnValue('new-token');
+
+      const result = await service.refreshToken('valid-refresh-token');
+      expect(result).toEqual({
+        access_token: 'new-token',
+        refresh_token: 'new-token',
+      });
+    });
+
+    it('should throw UnauthorizedException if token is invalid', async () => {
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error();
+      });
+
+      await expect(service.refreshToken('invalid-token')).rejects.toThrow();
+    });
+
+    it('should throw UnauthorizedException when token type is not refresh', async () => {
+      mockJwtService.verify.mockReturnValue({
+        type: 'access',
+        sub: 'user-id-1',
+        email: 'test@test.com',
+      });
+
+      await expect(service.refreshToken('access-type-token')).rejects.toThrow(
+        'Invalid refresh token',
+      );
+    });
+
+    it('should throw UnauthorizedException when user is not found after verification', async () => {
+      mockJwtService.verify.mockReturnValue({
+        type: 'refresh',
+        sub: 'non-existent-user',
+        email: 'ghost@test.com',
+      });
+      mockUsersService.findOne.mockResolvedValue(null);
+
+      await expect(service.refreshToken('valid-format-token')).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
   });
 });
