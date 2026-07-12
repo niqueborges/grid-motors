@@ -187,7 +187,7 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
 
-# 3. Start infrastructure services
+## 3. Start infrastructure services
 
 Start PostgreSQL and Redis containers:
 
