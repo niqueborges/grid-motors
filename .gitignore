@@ -42,3 +42,6 @@ yarn-error.log*
 
 # Prisma
 /generated/prisma
+
+# TypeScript incremental build cache
+*.tsbuildinfo
