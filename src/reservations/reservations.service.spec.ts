@@ -143,7 +143,9 @@ describe('ReservationsService', () => {
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
       mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
       const unknownError = new Error('Unexpected DB failure');
-      mockReservationsRepository.createWithCarLock.mockRejectedValue(unknownError);
+      mockReservationsRepository.createWithCarLock.mockRejectedValue(
+        unknownError,
+      );
 
       await expect(
         service.create(
@@ -297,7 +299,9 @@ describe('ReservationsService', () => {
       mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
       mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
       const unknownError = new Error('Unexpected DB failure on update');
-      mockReservationsRepository.updateWithCarLock.mockRejectedValue(unknownError);
+      mockReservationsRepository.updateWithCarLock.mockRejectedValue(
+        unknownError,
+      );
 
       await expect(
         service.update('res-1', {

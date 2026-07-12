@@ -50,9 +50,9 @@ describe('IsUniqueArrayConstraint', () => {
     });
 
     it('should return true for an array of unique primitives', () => {
-      expect(constraint.validate(['a', 'b', 'c'], makeArgs('description'))).toBe(
-        true,
-      );
+      expect(
+        constraint.validate(['a', 'b', 'c'], makeArgs('description')),
+      ).toBe(true);
     });
 
     it('should return false for an array of duplicate primitives', () => {
