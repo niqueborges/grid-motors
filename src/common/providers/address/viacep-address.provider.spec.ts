@@ -31,6 +31,7 @@ describe('ViaCepAddressProvider', () => {
         city: 'São Paulo',
         state: 'SP',
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(mockedAxios.get).toHaveBeenCalledWith(
         'https://viacep.com.br/ws/01001000/json/',
       );

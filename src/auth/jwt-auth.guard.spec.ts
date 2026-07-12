@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UnauthorizedException } from '@nestjs/common';
 
@@ -32,9 +34,9 @@ describe('JwtAuthGuard', () => {
     });
 
     it('should throw UnauthorizedException when err is truthy but not an Error instance', () => {
-      expect(() => guard.handleRequest('some string error', null, null)).toThrow(
-        UnauthorizedException,
-      );
+      expect(() =>
+        guard.handleRequest('some string error', null, null),
+      ).toThrow(UnauthorizedException);
     });
   });
 });
