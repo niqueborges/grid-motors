@@ -85,6 +85,77 @@ describe('ReservationsService', () => {
         }),
       );
     });
+
+    it('should throw BadRequestException when USER_OVERLAP is raised', async () => {
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+      mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
+      mockReservationsRepository.createWithCarLock.mockRejectedValue(
+        new Error('USER_OVERLAP'),
+      );
+
+      await expect(
+        service.create(
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-02'),
+            id_car: 'car-1',
+          },
+          'user-1',
+        ),
+      ).rejects.toThrow('User already has a reservation in this period');
+    });
+
+    it('should throw BadRequestException when CAR_OVERLAP is raised', async () => {
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+      mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
+      mockReservationsRepository.createWithCarLock.mockRejectedValue(
+        new Error('CAR_OVERLAP'),
+      );
+
+      await expect(
+        service.create(
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-02'),
+            id_car: 'car-1',
+          },
+          'user-1',
+        ),
+      ).rejects.toThrow('Car is already reserved in this period');
+    });
+
+    it('should throw BadRequestException when start_date is after end_date', async () => {
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+
+      await expect(
+        service.create(
+          {
+            start_date: new Date('2023-01-10'),
+            end_date: new Date('2023-01-01'),
+            id_car: 'car-1',
+          },
+          'user-1',
+        ),
+      ).rejects.toThrow('Start date must be before or equal to end date');
+    });
+
+    it('should re-throw unknown errors from createWithCarLock', async () => {
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+      mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
+      const unknownError = new Error('Unexpected DB failure');
+      mockReservationsRepository.createWithCarLock.mockRejectedValue(unknownError);
+
+      await expect(
+        service.create(
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-02'),
+            id_car: 'car-1',
+          },
+          'user-1',
+        ),
+      ).rejects.toThrow('Unexpected DB failure');
+    });
   });
 
   describe('findAll', () => {
@@ -139,6 +210,101 @@ describe('ReservationsService', () => {
         end_date: new Date('2023-01-03'),
       });
       expect(result).toEqual(updated);
+    });
+
+    it('should throw NotFoundException when update raises NOT_FOUND', async () => {
+      const existing = {
+        id: 'res-1',
+        start_date: new Date('2023-01-01'),
+        end_date: new Date('2023-01-02'),
+        carId: 'car-1',
+        userId: 'user-1',
+        final_value: 200,
+      };
+      mockReservationsRepository.findById.mockResolvedValue(existing);
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+      mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
+      mockReservationsRepository.updateWithCarLock.mockRejectedValue(
+        new Error('NOT_FOUND'),
+      );
+
+      await expect(
+        service.update('res-1', {
+          start_date: new Date('2023-01-01'),
+          end_date: new Date('2023-01-03'),
+        }),
+      ).rejects.toThrow('Reservation not found');
+    });
+
+    it('should throw BadRequestException when update raises USER_OVERLAP', async () => {
+      const existing = {
+        id: 'res-1',
+        start_date: new Date('2023-01-01'),
+        end_date: new Date('2023-01-02'),
+        carId: 'car-1',
+        userId: 'user-1',
+        final_value: 200,
+      };
+      mockReservationsRepository.findById.mockResolvedValue(existing);
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+      mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
+      mockReservationsRepository.updateWithCarLock.mockRejectedValue(
+        new Error('USER_OVERLAP'),
+      );
+
+      await expect(
+        service.update('res-1', {
+          start_date: new Date('2023-01-01'),
+          end_date: new Date('2023-01-03'),
+        }),
+      ).rejects.toThrow('User already has a reservation in this period');
+    });
+
+    it('should throw BadRequestException when update raises CAR_OVERLAP', async () => {
+      const existing = {
+        id: 'res-1',
+        start_date: new Date('2023-01-01'),
+        end_date: new Date('2023-01-02'),
+        carId: 'car-1',
+        userId: 'user-1',
+        final_value: 200,
+      };
+      mockReservationsRepository.findById.mockResolvedValue(existing);
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+      mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
+      mockReservationsRepository.updateWithCarLock.mockRejectedValue(
+        new Error('CAR_OVERLAP'),
+      );
+
+      await expect(
+        service.update('res-1', {
+          start_date: new Date('2023-01-01'),
+          end_date: new Date('2023-01-03'),
+        }),
+      ).rejects.toThrow('Car is already reserved in this period');
+    });
+
+    it('should re-throw unknown errors from updateWithCarLock', async () => {
+      const existing = {
+        id: 'res-1',
+        start_date: new Date('2023-01-01'),
+        end_date: new Date('2023-01-02'),
+        carId: 'car-1',
+        userId: 'user-1',
+        final_value: 200,
+      };
+      mockReservationsRepository.findById.mockResolvedValue(existing);
+      mockUsersRepository.findById.mockResolvedValue({ qualified: 'yes' });
+      mockCarsRepository.findById.mockResolvedValue({ value_per_day: 100 });
+      const unknownError = new Error('Unexpected DB failure on update');
+      mockReservationsRepository.updateWithCarLock.mockRejectedValue(unknownError);
+
+      await expect(
+        service.update('res-1', {
+          start_date: new Date('2023-01-01'),
+          end_date: new Date('2023-01-03'),
+        }),
+      ).rejects.toThrow('Unexpected DB failure on update');
     });
   });
 
