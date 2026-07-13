@@ -25,6 +25,34 @@ The goal of this project is to provide a complete RESTful API for managing car r
 
 The project follows a modular architecture inspired by Clean Architecture principles, keeping responsibilities separated and the codebase scalable.
 
+## System Architecture
+
+```mermaid
+flowchart TD
+    Client([Client / Swagger UI]) -->|HTTP REST| API
+    
+    subgraph "Docker Compose"
+        subgraph "NestJS Application"
+            API[API Controllers]
+            Auth[Auth & JWT Strategy]
+            Services[Business Services]
+            Repos[Prisma Repositories]
+            
+            API --> Auth
+            API --> Services
+            Services --> Repos
+        end
+        
+        Cache[(Redis Cache)]
+        DB[(PostgreSQL)]
+        
+        Services -.->|Cache Data| Cache
+        Repos -->|Prisma ORM| DB
+    end
+```
+
+## Folder Structure
+
 ```
 grid-motors/
 ├── prisma/
@@ -55,6 +83,66 @@ Use one of the provided examples to create your local configuration:
 
 - `.env.example` → running the API locally
 - `.env.docker.example` → running the complete environment with Docker Compose
+
+---
+
+# 🗄️ Database Schema
+
+The API uses a relational database structure managed by Prisma ORM.
+
+```mermaid
+erDiagram
+    User {
+        String id PK
+        String name
+        String cpf UK
+        DateTime birth
+        String email UK
+        String password
+        String cep
+        String street
+        String neighborhood
+        String city
+        String state
+        String qualified
+        DateTime createdAt
+        DateTime updatedAt
+    }
+    
+    Car {
+        String id PK
+        String model
+        String color
+        Int year
+        Float value_per_day
+        Int number_of_passengers
+        DateTime createdAt
+        DateTime updatedAt
+    }
+    
+    Accessory {
+        String id PK
+        String description
+        String carId FK
+        DateTime createdAt
+        DateTime updatedAt
+    }
+    
+    Reservation {
+        String id PK
+        DateTime start_date
+        DateTime end_date
+        Float final_value
+        String userId FK
+        String carId FK
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    User ||--o{ Reservation : "makes"
+    Car ||--o{ Reservation : "has"
+    Car ||--o{ Accessory : "has"
+```
 
 ---
 
