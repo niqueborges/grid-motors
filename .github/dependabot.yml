@@ -13,10 +13,16 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "@nestjs/*"
+        update-types: ["version-update:semver-major"]
     groups:
       nestjs:
         patterns:
           - "@nestjs/*"
+        update-types:
+          - "minor"
+          - "patch"
       prisma:
         patterns:
           - "@prisma/*"
