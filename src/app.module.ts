@@ -19,14 +19,24 @@ import { redisStore } from 'cache-manager-redis-yet';
     ]),
     CacheModule.registerAsync({
       isGlobal: true,
-      useFactory: async () => ({
-        store: await redisStore({
+      useFactory: async () => {
+        const store = await redisStore({
           socket: {
             host: process.env.REDIS_HOST || 'localhost',
             port: parseInt(process.env.REDIS_PORT || '6379', 10),
           },
-        }),
-      }),
+        });
+
+        return {
+          store: Object.assign(store, {
+            disconnect: async () => {
+              if (store.client.isOpen) {
+                await store.client.quit();
+              }
+            },
+          }),
+        };
+      },
     }),
     PrismaModule,
     UsersModule,
