@@ -27,7 +27,7 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-express": "11.2.8",
     "@nestjs/swagger": "^11.4.5",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.8.0",
@@ -93,13 +93,18 @@
     "testEnvironment": "node"
   },
   "allowScripts": {
-    "@prisma/engines@7.8.0": true,
-    "prisma@7.8.0": true,
     "unrs-resolver@1.12.2": true,
     "@scarf/scarf@1.4.0": true,
-    "bcrypt@6.0.0": true
+    "bcrypt@6.0.0": true,
+    "@prisma/engines@7.10.1": true,
+    "prisma@7.10.1": true
   },
   "engines": {
     "node": ">=26.0.0 <27"
+  },
+  "overrides": {
+    "@nestjs/platform-express": {
+      "multer": "2.5.0"
+    }
   }
 }
