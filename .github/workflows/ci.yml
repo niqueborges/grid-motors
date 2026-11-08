@@ -5,6 +5,7 @@ on:
     branches:
       - develop
       - "feature/**"
+      - "chore/**"
       - main
   pull_request:
     branches:
@@ -17,17 +18,31 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       DATABASE_URL: "postgresql://user:pass@localhost:5432/ci_db?schema=public"
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [26.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -41,3 +56,5 @@ jobs:
       - run: npm run build
 
       - run: npm run test:cov
+
+      - run: npm run test:e2e -- --detectOpenHandles
