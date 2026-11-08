@@ -29,6 +29,8 @@ describe('Grid Motors API (e2e)', () => {
   let validBearerToken: string;
 
   beforeAll(async () => {
+    process.env.JWT_SECRET ??= 'test-e2e-jwt-secret-key-grid-motors';
+
     // Ensure REDIS_HOST points to localhost if not set in environment
     if (!process.env.REDIS_HOST) {
       process.env.REDIS_HOST = 'localhost';
@@ -209,6 +211,6 @@ describe('Grid Motors API (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await app?.close();
   });
 });
