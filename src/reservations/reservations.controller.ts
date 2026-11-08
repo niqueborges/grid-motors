@@ -11,6 +11,7 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -53,17 +54,36 @@ export class ReservationsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a reservation by ID' })
+  @ApiResponse({ status: 200, description: 'The reservation.' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format.' })
   @ApiResponse({ status: 404, description: 'Reservation not found' })
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param(
+      'id',
+      new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }),
+    )
+    id: string,
+  ) {
     return this.reservationsService.findOne(id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a reservation' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reservation successfully updated.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid ID format or Business Rule Validation Failed',
+  })
   @ApiResponse({ status: 404, description: 'Reservation not found' })
-  @ApiResponse({ status: 400, description: 'Business Rule Validation Failed' })
   update(
-    @Param('id') id: string,
+    @Param(
+      'id',
+      new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }),
+    )
+    id: string,
     @Body() updateReservationDto: UpdateReservationDto,
   ) {
     return this.reservationsService.update(id, updateReservationDto);
@@ -73,8 +93,15 @@ export class ReservationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a reservation' })
   @ApiResponse({ status: 204, description: 'Deleted' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format.' })
   @ApiResponse({ status: 404, description: 'Reservation not found' })
-  remove(@Param('id') id: string) {
+  remove(
+    @Param(
+      'id',
+      new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }),
+    )
+    id: string,
+  ) {
     return this.reservationsService.remove(id);
   }
 }

@@ -65,29 +65,35 @@ describe('ReservationsController', () => {
     });
   });
 
+  const validUuid = '123e4567-e89b-12d3-a456-426614174000';
+
   describe('findOne', () => {
-    it('should return a reservation', async () => {
-      mockReservationsService.findOne.mockResolvedValue({ id: 'res-1' });
-      const result = await controller.findOne('res-1');
-      expect(result).toEqual({ id: 'res-1' });
+    it('should forward valid UUID to service and return reservation', async () => {
+      mockReservationsService.findOne.mockResolvedValue({ id: validUuid });
+      const result = await controller.findOne(validUuid);
+      expect(result).toEqual({ id: validUuid });
+      expect(mockReservationsService.findOne).toHaveBeenCalledWith(validUuid);
     });
   });
 
   describe('update', () => {
-    it('should update a reservation', async () => {
-      mockReservationsService.update.mockResolvedValue({ id: 'res-1' });
-      const result = await controller.update('res-1', {
-        start_date: new Date(),
-      });
-      expect(result).toEqual({ id: 'res-1' });
+    it('should forward valid UUID and dto to service and update reservation', async () => {
+      const updateDto = { start_date: new Date() };
+      mockReservationsService.update.mockResolvedValue({ id: validUuid });
+      const result = await controller.update(validUuid, updateDto);
+      expect(result).toEqual({ id: validUuid });
+      expect(mockReservationsService.update).toHaveBeenCalledWith(
+        validUuid,
+        updateDto,
+      );
     });
   });
 
   describe('remove', () => {
-    it('should remove a reservation', async () => {
+    it('should forward valid UUID to service and remove reservation', async () => {
       mockReservationsService.remove.mockResolvedValue(undefined);
-      await controller.remove('res-1');
-      expect(mockReservationsService.remove).toHaveBeenCalledWith('res-1');
+      await controller.remove(validUuid);
+      expect(mockReservationsService.remove).toHaveBeenCalledWith(validUuid);
     });
   });
 });
