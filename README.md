@@ -10,7 +10,7 @@ The goal of this project is to provide a complete RESTful API for managing car r
 
 ## 🛠 What's under the hood?
 
-- **[Node.js](https://nodejs.org/en/)** (v20+) & **[NestJS](https://nestjs.com/)**
+- **[Node.js](https://nodejs.org/en/)** (v26.x LTS) & **[NestJS](https://nestjs.com/)**
 - **[TypeScript](https://www.typescriptlang.org/)**
 - **[Prisma ORM](https://www.prisma.io/)** with **[PostgreSQL](https://www.postgresql.org/)**
 - **[Redis](https://redis.io/)** for caching
@@ -152,7 +152,7 @@ erDiagram
 
 Make sure you have installed:
 
-- Node.js 20+
+- Node.js 26.x LTS
 - Docker Engine
 - Docker Compose V2
 
