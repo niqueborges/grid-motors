@@ -79,10 +79,10 @@ grid-motors/
 
 The `.env` file is intentionally ignored by Git.
 
-Use one of the provided examples to create your local configuration:
+Create your local configuration from the template:
 
-- `.env.example` → running the API locally
-- `.env.docker.example` → running the complete environment with Docker Compose
+- `.env.example` → unified environment template (serves both local execution and Docker Compose)
+- `.env.docker.example` → reference template for standalone container network variables
 
 ---
 
@@ -182,30 +182,25 @@ git clone https://github.com/niqueborges/grid-motors.git
 cd grid-motors
 ```
 
-## 2. Configure Docker environment variables
+## 2. Configure environment variables
 
 Create your `.env` file:
 
 ```bash
-cp .env.docker.example .env
+cp .env.example .env
 ```
 
 Example:
 
 ```env
 PORT=3000
-DATABASE_URL="postgresql://postgres:postgres@db:5432/grid_motors?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/grid_motors?schema=public"
 JWT_SECRET="change-me"
-REDIS_HOST=redis
+REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
 
-Inside Docker, services communicate using container names:
-
-```
-PostgreSQL: db:5432
-Redis: redis:6379
-```
+When executing via Docker Compose, the `api` service automatically overrides the database and Redis network hosts (`db:5432` and `redis:6379`) through its internal network, allowing a single `.env` file to be used seamlessly for both Docker and local development.
 
 ## 3. Build and start containers
 
@@ -259,7 +254,7 @@ npm install
 
 ## 2. Configure local environment
 
-Create your local .env:
+If not created yet, create your local `.env`:
 
 ```bash
 cp .env.example .env

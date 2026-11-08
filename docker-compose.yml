@@ -24,6 +24,10 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/grid_motors?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     command: sh -c "npx --yes prisma migrate deploy && npm run start:prod"
     depends_on:
       - db
