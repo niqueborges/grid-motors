@@ -290,9 +290,9 @@ PostgreSQL: localhost:5433
 Redis: localhost:6379
 ```
 
-## 4. Generate Prisma Cliente and database migrations
+## 4. Generate Prisma Client and database migrations
 
-npx prisma client and generatebase migrations
+Generate Prisma Client and apply database migrations:
 
 ```bash
 npx prisma generate
