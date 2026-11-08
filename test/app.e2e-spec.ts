@@ -6,6 +6,7 @@ import { AppModule } from './../src/app.module';
 import { JwtService } from '@nestjs/jwt';
 import { ReservationsService } from '../src/reservations/reservations.service';
 import { UsersService } from '../src/users/users.service';
+import { CarsService } from '../src/cars/cars.service';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { UserEntity } from '../src/users/entities/user.entity';
 
@@ -14,11 +15,17 @@ interface ApiResponseError {
   message: string | string[];
 }
 
+interface ApiCarResponse {
+  id: string;
+  color: string;
+}
+
 describe('Grid Motors API (e2e)', () => {
   let app: INestApplication<App>;
   let jwtService: JwtService;
   let reservationsService: ReservationsService;
   let usersService: UsersService;
+  let carsService: CarsService;
   let validBearerToken: string;
 
   beforeAll(async () => {
@@ -47,6 +54,7 @@ describe('Grid Motors API (e2e)', () => {
     reservationsService =
       moduleFixture.get<ReservationsService>(ReservationsService);
     usersService = moduleFixture.get<UsersService>(UsersService);
+    carsService = moduleFixture.get<CarsService>(CarsService);
 
     validBearerToken = jwtService.sign({
       sub: '123e4567-e89b-12d3-a456-426614174000',
@@ -150,6 +158,53 @@ describe('Grid Motors API (e2e)', () => {
       const body = response.body as ApiResponseError;
       expect(body.statusCode).toBe(401);
       expect(body.message).toBe('Invalid email or password');
+    });
+  });
+
+  describe('N2: UpdateCarDto Accessories Rejection', () => {
+    const validCarId = '123e4567-e89b-12d3-a456-426614174000';
+
+    it('/api/v1/cars/:id (PATCH) - should reject payload containing accessories with HTTP 400', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/api/v1/cars/${validCarId}`)
+        .set('Authorization', `Bearer ${validBearerToken}`)
+        .send({
+          color: 'Silver',
+          accessories: [{ description: 'Sunroof' }],
+        })
+        .expect(400);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(400);
+      const messages = Array.isArray(body.message)
+        ? body.message
+        : [body.message];
+      expect(messages).toContain('property accessories should not exist');
+    });
+
+    it('/api/v1/cars/:id (PATCH) - should accept valid car fields without accessories', async () => {
+      const spy = jest.spyOn(carsService, 'update').mockResolvedValueOnce({
+        id: validCarId,
+        model: 'GM S10 2.8',
+        color: 'Silver',
+        year: 2021,
+        value_per_day: 50,
+        number_of_passengers: 5,
+        accessories: [],
+      });
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/v1/cars/${validCarId}`)
+        .set('Authorization', `Bearer ${validBearerToken}`)
+        .send({
+          color: 'Silver',
+        })
+        .expect(200);
+
+      const carBody = response.body as ApiCarResponse;
+      expect(carBody.id).toBe(validCarId);
+      expect(carBody.color).toBe('Silver');
+      expect(spy).toHaveBeenCalled();
     });
   });
 
