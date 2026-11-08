@@ -151,11 +151,10 @@ describe('UsersService', () => {
       expect(result).toEqual({ id: '1', email: 'a@a.com' });
     });
 
-    it('should throw NotFoundException if user is not found by email', async () => {
+    it('should return null if user is not found by email', async () => {
       mockUsersRepository.findByEmail.mockResolvedValue(null);
-      await expect(service.findByEmail('a@a.com')).rejects.toThrow(
-        NotFoundException,
-      );
+      const result = await service.findByEmail('notfound@a.com');
+      expect(result).toBeNull();
     });
   });
 

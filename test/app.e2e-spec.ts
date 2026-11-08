@@ -5,7 +5,9 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { JwtService } from '@nestjs/jwt';
 import { ReservationsService } from '../src/reservations/reservations.service';
+import { UsersService } from '../src/users/users.service';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { UserEntity } from '../src/users/entities/user.entity';
 
 interface ApiResponseError {
   statusCode: number;
@@ -16,6 +18,7 @@ describe('Grid Motors API (e2e)', () => {
   let app: INestApplication<App>;
   let jwtService: JwtService;
   let reservationsService: ReservationsService;
+  let usersService: UsersService;
   let validBearerToken: string;
 
   beforeAll(async () => {
@@ -43,6 +46,7 @@ describe('Grid Motors API (e2e)', () => {
     jwtService = moduleFixture.get<JwtService>(JwtService);
     reservationsService =
       moduleFixture.get<ReservationsService>(ReservationsService);
+    usersService = moduleFixture.get<UsersService>(UsersService);
 
     validBearerToken = jwtService.sign({
       sub: '123e4567-e89b-12d3-a456-426614174000',
@@ -99,6 +103,53 @@ describe('Grid Motors API (e2e)', () => {
       const body = response.body as ApiResponseError;
       expect(body.statusCode).toBe(400);
       expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('I5: findByEmail & Uniform Login Responses', () => {
+    it('/api/v1/auth/login (POST) - should return HTTP 401 when email does not exist', async () => {
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValueOnce(null);
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({
+          email: 'nonexistent-user@example.com',
+          password: 'password123',
+        })
+        .expect(401);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(401);
+      expect(body.message).toBe('Invalid email or password');
+    });
+
+    it('/api/v1/auth/login (POST) - should return HTTP 401 with identical payload when password is wrong', async () => {
+      const mockUser = new UserEntity({
+        id: 'user-1',
+        name: 'Existing User',
+        email: 'existing@example.com',
+        // Valid bcrypt hash of "correctPassword"
+        password:
+          '$2b$10$w8k2.tFf.nCsqBfJ1tV5x.t6G6fRkQzO1v2a3b4c5d6e7f8g9h0i.',
+        cpf: '12345678901',
+        birth: new Date('2000-01-01'),
+        cep: '01001000',
+        qualified: 'yes',
+      });
+
+      jest.spyOn(usersService, 'findByEmail').mockResolvedValueOnce(mockUser);
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({
+          email: 'existing@example.com',
+          password: 'wrongPassword123',
+        })
+        .expect(401);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(401);
+      expect(body.message).toBe('Invalid email or password');
     });
   });
 

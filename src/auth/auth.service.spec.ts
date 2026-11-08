@@ -99,6 +99,30 @@ describe('AuthService', () => {
       expect(jwtService.sign).toHaveBeenCalled();
     });
 
+    it('should throw UnauthorizedException with identical message when email is not found', async () => {
+      mockUsersService.findByEmail.mockResolvedValue(null);
+
+      await expect(
+        service.login({
+          email: 'nonexistent@test.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow('Invalid email or password');
+    });
+
+    it('should throw UnauthorizedException with identical message when password is wrong', async () => {
+      mockUsersService.findByEmail.mockResolvedValue({
+        id: '1',
+        email: 'test@test.com',
+        password: 'hashed-password',
+      });
+      mockHashProvider.compare.mockResolvedValue(false);
+
+      await expect(
+        service.login({ email: 'test@test.com', password: 'wrong-password' }),
+      ).rejects.toThrow('Invalid email or password');
+    });
+
     it('should throw UnauthorizedException for invalid credentials', async () => {
       jest.spyOn(service, 'validateUser').mockResolvedValue(null);
 
