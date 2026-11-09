@@ -17,6 +17,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Declared the supported Node.js runtime in `.nvmrc` and `package.json`.
 - Added end-to-end test execution to the CI workflow.
 - Documented the modernization scope and runtime decision through ADRs.
+- Documented user authentication, data minimization, and ownership authorization policy through ADR-0003.
 
 ## [1.0.0] - 2026-07-11
 
