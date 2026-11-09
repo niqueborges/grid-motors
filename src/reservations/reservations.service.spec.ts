@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReservationsService } from './reservations.service';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 const mockReservationsRepository = {
   createWithCarLock: jest.fn(),
@@ -40,6 +41,7 @@ describe('ReservationsService', () => {
     }).compile();
 
     service = module.get<ReservationsService>(ReservationsService);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -192,7 +194,43 @@ describe('ReservationsService', () => {
   });
 
   describe('update', () => {
-    it('should update reservation', async () => {
+    it('should throw NotFoundException if reservation does not exist', async () => {
+      mockReservationsRepository.findById.mockResolvedValue(null);
+      await expect(
+        service.update('non-existent', { start_date: new Date() }, 'user-1'),
+      ).rejects.toThrow(NotFoundException);
+      expect(
+        mockReservationsRepository.updateWithCarLock,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException if reservation belongs to another user and not perform update', async () => {
+      const existing = {
+        id: 'res-1',
+        start_date: new Date('2023-01-01'),
+        end_date: new Date('2023-01-02'),
+        carId: 'car-1',
+        userId: 'user-owner',
+        final_value: 200,
+      };
+      mockReservationsRepository.findById.mockResolvedValue(existing);
+
+      await expect(
+        service.update(
+          'res-1',
+          { start_date: new Date('2023-01-01') },
+          'user-other',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(
+        mockReservationsRepository.updateWithCarLock,
+      ).not.toHaveBeenCalled();
+      expect(mockCarsRepository.findById).not.toHaveBeenCalled();
+      expect(mockUsersRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it('should update reservation when owned by authenticated user', async () => {
       const existing = {
         id: 'res-1',
         start_date: new Date('2023-01-01'),
@@ -207,10 +245,14 @@ describe('ReservationsService', () => {
       const updated = { ...existing, final_value: 300 };
       mockReservationsRepository.updateWithCarLock.mockResolvedValue(updated);
 
-      const result = await service.update('res-1', {
-        start_date: new Date('2023-01-01'),
-        end_date: new Date('2023-01-03'),
-      });
+      const result = await service.update(
+        'res-1',
+        {
+          start_date: new Date('2023-01-01'),
+          end_date: new Date('2023-01-03'),
+        },
+        'user-1',
+      );
       expect(result).toEqual(updated);
     });
 
@@ -231,10 +273,14 @@ describe('ReservationsService', () => {
       );
 
       await expect(
-        service.update('res-1', {
-          start_date: new Date('2023-01-01'),
-          end_date: new Date('2023-01-03'),
-        }),
+        service.update(
+          'res-1',
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-03'),
+          },
+          'user-1',
+        ),
       ).rejects.toThrow('Reservation not found');
     });
 
@@ -255,10 +301,14 @@ describe('ReservationsService', () => {
       );
 
       await expect(
-        service.update('res-1', {
-          start_date: new Date('2023-01-01'),
-          end_date: new Date('2023-01-03'),
-        }),
+        service.update(
+          'res-1',
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-03'),
+          },
+          'user-1',
+        ),
       ).rejects.toThrow('User already has a reservation in this period');
     });
 
@@ -279,10 +329,14 @@ describe('ReservationsService', () => {
       );
 
       await expect(
-        service.update('res-1', {
-          start_date: new Date('2023-01-01'),
-          end_date: new Date('2023-01-03'),
-        }),
+        service.update(
+          'res-1',
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-03'),
+          },
+          'user-1',
+        ),
       ).rejects.toThrow('Car is already reserved in this period');
     });
 
@@ -304,19 +358,45 @@ describe('ReservationsService', () => {
       );
 
       await expect(
-        service.update('res-1', {
-          start_date: new Date('2023-01-01'),
-          end_date: new Date('2023-01-03'),
-        }),
+        service.update(
+          'res-1',
+          {
+            start_date: new Date('2023-01-01'),
+            end_date: new Date('2023-01-03'),
+          },
+          'user-1',
+        ),
       ).rejects.toThrow('Unexpected DB failure on update');
     });
   });
 
   describe('remove', () => {
-    it('should remove reservation', async () => {
-      mockReservationsRepository.findById.mockResolvedValue({ id: 'res-1' });
+    it('should throw NotFoundException if reservation does not exist', async () => {
+      mockReservationsRepository.findById.mockResolvedValue(null);
+      await expect(service.remove('non-existent', 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockReservationsRepository.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException if reservation belongs to another user and not delete', async () => {
+      mockReservationsRepository.findById.mockResolvedValue({
+        id: 'res-1',
+        userId: 'user-owner',
+      });
+      await expect(service.remove('res-1', 'user-other')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockReservationsRepository.delete).not.toHaveBeenCalled();
+    });
+
+    it('should remove reservation when owned by authenticated user', async () => {
+      mockReservationsRepository.findById.mockResolvedValue({
+        id: 'res-1',
+        userId: 'user-1',
+      });
       mockReservationsRepository.delete.mockResolvedValue(undefined);
-      await service.remove('res-1');
+      await service.remove('res-1', 'user-1');
       expect(mockReservationsRepository.delete).toHaveBeenCalledWith('res-1');
     });
   });
