@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -121,23 +125,123 @@ describe('UsersService', () => {
   });
 
   describe('findAll', () => {
-    it('should return all users', async () => {
-      mockUsersRepository.findAll.mockResolvedValue([{ id: '1' }]);
+    it('should return minimal projection (id, name, qualified) and omit sensitive/cadastral data', async () => {
+      const mockFullUser = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        name: 'John Doe',
+        cpf: '12345678901',
+        birth: new Date('1990-01-01'),
+        email: 'john@example.com',
+        password: 'hashed-password',
+        cep: '01001000',
+        street: 'Main Street',
+        neighborhood: 'Downtown',
+        city: 'City',
+        state: 'ST',
+        qualified: 'yes',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockUsersRepository.findAll.mockResolvedValue([mockFullUser]);
+
       const result = await service.findAll();
-      expect(result).toEqual([{ id: '1' }]);
+
+      expect(result).toEqual([
+        {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'John Doe',
+          qualified: 'yes',
+        },
+      ]);
+      expect(result[0]).not.toHaveProperty('cpf');
+      expect(result[0]).not.toHaveProperty('birth');
+      expect(result[0]).not.toHaveProperty('email');
+      expect(result[0]).not.toHaveProperty('password');
+      expect(result[0]).not.toHaveProperty('cep');
+      expect(result[0]).not.toHaveProperty('street');
+      expect(result[0]).not.toHaveProperty('neighborhood');
+      expect(result[0]).not.toHaveProperty('city');
+      expect(result[0]).not.toHaveProperty('state');
+      expect(result[0]).not.toHaveProperty('createdAt');
+      expect(result[0]).not.toHaveProperty('updatedAt');
+    });
+  });
+
+  describe('findById', () => {
+    it('should return a user entity if found', async () => {
+      const mockUser = { id: '1', name: 'John Doe' };
+      mockUsersRepository.findById.mockResolvedValue(mockUser);
+
+      const result = await service.findById('1');
+
+      expect(result).toEqual(mockUser);
+      expect(mockUsersRepository.findById).toHaveBeenCalledWith('1');
+    });
+
+    it('should return null if user is not found', async () => {
+      mockUsersRepository.findById.mockResolvedValue(null);
+
+      const result = await service.findById('non-existent');
+
+      expect(result).toBeNull();
+      expect(mockUsersRepository.findById).toHaveBeenCalledWith('non-existent');
     });
   });
 
   describe('findOne', () => {
-    it('should return a user if found', async () => {
-      mockUsersRepository.findById.mockResolvedValue({ id: '1' });
-      const result = await service.findOne('1');
-      expect(result).toEqual({ id: '1' });
+    it('should throw ForbiddenException if id does not match currentUserId without querying repository', async () => {
+      await expect(service.findOne('user-1', 'user-2')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockUsersRepository.findById).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if user is not found', async () => {
       mockUsersRepository.findById.mockResolvedValue(null);
-      await expect(service.findOne('1')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('1', '1')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockUsersRepository.findById).toHaveBeenCalledWith('1');
+    });
+
+    it('should return user profile without password if found and owner', async () => {
+      const mockUser = {
+        id: '1',
+        name: 'John Doe',
+        cpf: '12345678901',
+        birth: new Date('1990-01-01'),
+        email: 'john@example.com',
+        password: 'hashed-secret-password',
+        cep: '01001000',
+        street: 'Main Street',
+        neighborhood: 'Downtown',
+        city: 'City',
+        state: 'ST',
+        qualified: 'yes',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-02'),
+      };
+      mockUsersRepository.findById.mockResolvedValue(mockUser);
+
+      const result = await service.findOne('1', '1');
+
+      expect(result).toEqual({
+        id: '1',
+        name: 'John Doe',
+        cpf: '12345678901',
+        birth: new Date('1990-01-01'),
+        email: 'john@example.com',
+        cep: '01001000',
+        qualified: 'yes',
+        street: 'Main Street',
+        neighborhood: 'Downtown',
+        city: 'City',
+        state: 'ST',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-02'),
+      });
+      expect(result).not.toHaveProperty('password');
+      expect(mockUsersRepository.findById).toHaveBeenCalledWith('1');
     });
   });
 
@@ -159,9 +263,16 @@ describe('UsersService', () => {
   });
 
   describe('update', () => {
+    it('should throw ForbiddenException if id does not match currentUserId without querying repository', async () => {
+      await expect(
+        service.update('user-1', { name: 'test' }, 'user-2'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockUsersRepository.findById).not.toHaveBeenCalled();
+    });
+
     it('should throw NotFoundException if user to update does not exist', async () => {
       mockUsersRepository.findById.mockResolvedValue(null);
-      await expect(service.update('1', { name: 'test' })).rejects.toThrow(
+      await expect(service.update('1', { name: 'test' }, '1')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -171,7 +282,7 @@ describe('UsersService', () => {
       mockUsersRepository.findByEmailOrCpf.mockResolvedValue({ id: '2' });
 
       await expect(
-        service.update('1', { email: 'test@example.com' }),
+        service.update('1', { email: 'test@example.com' }, '1'),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -191,7 +302,7 @@ describe('UsersService', () => {
       const expectedUpdated = { id: '1', name: 'New Name' };
       mockUsersRepository.update.mockResolvedValue(expectedUpdated);
 
-      const result = await service.update('1', updateDto);
+      const result = await service.update('1', updateDto, '1');
       expect(result).toEqual(expectedUpdated);
       expect(mockUsersRepository.update).toHaveBeenCalledWith(
         '1',
@@ -204,21 +315,28 @@ describe('UsersService', () => {
       mockUsersRepository.findByEmailOrCpf.mockResolvedValue(null);
       mockAddressProvider.getAddressByCep.mockResolvedValue(null);
 
-      await expect(service.update('1', { cep: 'invalid' })).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.update('1', { cep: 'invalid' }, '1'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('remove', () => {
+    it('should throw ForbiddenException if id does not match currentUserId without querying repository', async () => {
+      await expect(service.remove('user-1', 'user-2')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockUsersRepository.findById).not.toHaveBeenCalled();
+    });
+
     it('should throw NotFoundException if user to remove does not exist', async () => {
       mockUsersRepository.findById.mockResolvedValue(null);
-      await expect(service.remove('1')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('1', '1')).rejects.toThrow(NotFoundException);
     });
 
     it('should delete user successfully', async () => {
       mockUsersRepository.findById.mockResolvedValue({ id: '1' });
-      await service.remove('1');
+      await service.remove('1', '1');
       expect(mockUsersRepository.delete).toHaveBeenCalledWith('1');
     });
   });

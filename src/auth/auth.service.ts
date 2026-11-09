@@ -61,7 +61,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid token type');
       }
 
-      const user = await this.usersService.findOne(payload.sub);
+      const user = await this.usersService.findById(payload.sub);
       if (!user) {
         throw new UnauthorizedException('User not found');
       }

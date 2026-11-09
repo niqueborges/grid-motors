@@ -1,11 +1,14 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   Inject,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserSummaryDto } from './dto/user-summary.dto';
+import { UserProfileDto } from './dto/user-profile.dto';
 import type { IUsersRepository } from './repositories/users.repository';
 import type { IAddressProvider } from '../common/providers/address/address-provider.interface';
 import type { IHashProvider } from '../common/providers/hash/hash-provider.interface';
@@ -64,23 +67,63 @@ export class UsersService {
     return user;
   }
 
-  async findAll() {
-    return this.usersRepository.findAll();
+  async findAll(): Promise<UserSummaryDto[]> {
+    const users = await this.usersRepository.findAll();
+    return users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      qualified: user.qualified,
+    }));
   }
 
-  async findOne(id: string) {
+  async findById(id: string): Promise<UserEntity | null> {
+    return this.usersRepository.findById(id);
+  }
+
+  async findOne(id: string, currentUserId: string): Promise<UserProfileDto> {
+    if (id !== currentUserId) {
+      throw new ForbiddenException(
+        'You do not have permission to access this user profile',
+      );
+    }
+
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+
+    return {
+      id: user.id,
+      name: user.name,
+      cpf: user.cpf,
+      birth: user.birth,
+      email: user.email,
+      cep: user.cep,
+      qualified: user.qualified,
+      street: user.street,
+      neighborhood: user.neighborhood,
+      city: user.city,
+      state: user.state,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     return this.usersRepository.findByEmail(email);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    currentUserId: string,
+  ): Promise<UserEntity> {
+    if (id !== currentUserId) {
+      throw new ForbiddenException(
+        'You do not have permission to update this user account',
+      );
+    }
+
     const userExists = await this.usersRepository.findById(id);
     if (!userExists) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -135,7 +178,13 @@ export class UsersService {
     return updatedUser;
   }
 
-  async remove(id: string) {
+  async remove(id: string, currentUserId: string): Promise<void> {
+    if (id !== currentUserId) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this user account',
+      );
+    }
+
     const userExists = await this.usersRepository.findById(id);
     if (!userExists) {
       throw new NotFoundException(`User with ID ${id} not found`);

@@ -10,6 +10,7 @@ describe('AuthService', () => {
 
   const mockUsersService = {
     findByEmail: jest.fn(),
+    findById: jest.fn(),
     findOne: jest.fn(),
   };
 
@@ -139,7 +140,7 @@ describe('AuthService', () => {
         sub: 'user-id-1',
         email: 'test@test.com',
       });
-      mockUsersService.findOne.mockResolvedValue({
+      mockUsersService.findById.mockResolvedValue({
         id: 'user-id-1',
         email: 'test@test.com',
       });
@@ -150,6 +151,7 @@ describe('AuthService', () => {
         access_token: 'new-token',
         refresh_token: 'new-token',
       });
+      expect(mockUsersService.findById).toHaveBeenCalledWith('user-id-1');
     });
 
     it('should throw UnauthorizedException if token is invalid', async () => {
@@ -178,10 +180,13 @@ describe('AuthService', () => {
         sub: 'non-existent-user',
         email: 'ghost@test.com',
       });
-      mockUsersService.findOne.mockResolvedValue(null);
+      mockUsersService.findById.mockResolvedValue(null);
 
       await expect(service.refreshToken('valid-format-token')).rejects.toThrow(
         'Invalid refresh token',
+      );
+      expect(mockUsersService.findById).toHaveBeenCalledWith(
+        'non-existent-user',
       );
     });
   });
