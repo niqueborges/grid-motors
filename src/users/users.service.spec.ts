@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FindUsersQueryDto } from './dto/find-users.query.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -14,6 +15,7 @@ describe('UsersService', () => {
   const mockUsersRepository = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findAllPaginated: jest.fn(),
     findById: jest.fn(),
     findByEmail: jest.fn(),
     findByEmailOrCpf: jest.fn(),
@@ -164,6 +166,168 @@ describe('UsersService', () => {
       expect(result[0]).not.toHaveProperty('state');
       expect(result[0]).not.toHaveProperty('createdAt');
       expect(result[0]).not.toHaveProperty('updatedAt');
+    });
+  });
+
+  describe('findAllPaginated', () => {
+    const mockUser1 = { id: 'aaa-111', name: 'Alice', qualified: 'yes' };
+    const mockUser2 = { id: 'bbb-222', name: 'Bob', qualified: 'no' };
+
+    it('should use default limit (10) and offset (0) when query is empty and delegate to repository', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [mockUser1],
+        total: 1,
+      });
+
+      const query: FindUsersQueryDto = {};
+      const result = await service.findAllPaginated(query);
+
+      expect(mockUsersRepository.findAllPaginated).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 0,
+      });
+      expect(result.limit).toBe(10);
+      expect(result.offset).toBe(0);
+      expect(result.offsets).toBe(1);
+      expect(result.total).toBe(1);
+      expect(result.users).toEqual([mockUser1]);
+    });
+
+    it('should calculate offsets = 0 when total is 0', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [],
+        total: 0,
+      });
+
+      const result = await service.findAllPaginated({});
+
+      expect(result.total).toBe(0);
+      expect(result.offsets).toBe(0);
+      expect(result.users).toEqual([]);
+    });
+
+    it('should calculate offsets = 1 when total is 1 and limit is 10', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [mockUser1],
+        total: 1,
+      });
+
+      const result = await service.findAllPaginated({ limit: 10, offset: 0 });
+
+      expect(result.offsets).toBe(1);
+      expect(result.total).toBe(1);
+    });
+
+    it('should calculate offsets = 2 when total is 11 and limit is 10', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [mockUser1, mockUser2],
+        total: 11,
+      });
+
+      const result = await service.findAllPaginated({ limit: 10, offset: 0 });
+
+      expect(result.offsets).toBe(2);
+      expect(result.total).toBe(11);
+    });
+
+    it('should calculate offsets = 5 when total is 45 and limit is 10', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [mockUser1],
+        total: 45,
+      });
+
+      const result = await service.findAllPaginated({ limit: 10, offset: 40 });
+
+      expect(result.offsets).toBe(5);
+      expect(result.offset).toBe(40);
+      expect(result.total).toBe(45);
+    });
+
+    it('should correctly handle minimum allowed limit of 1 and calculate offsets', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [mockUser1],
+        total: 3,
+      });
+
+      const result = await service.findAllPaginated({ limit: 1, offset: 0 });
+
+      expect(mockUsersRepository.findAllPaginated).toHaveBeenCalledWith({
+        limit: 1,
+        offset: 0,
+      });
+      expect(result.limit).toBe(1);
+      expect(result.offsets).toBe(3);
+    });
+
+    it('should correctly handle maximum allowed limit of 100 and calculate offsets', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [mockUser1, mockUser2],
+        total: 250,
+      });
+
+      const result = await service.findAllPaginated({ limit: 100, offset: 0 });
+
+      expect(mockUsersRepository.findAllPaginated).toHaveBeenCalledWith({
+        limit: 100,
+        offset: 0,
+      });
+      expect(result.limit).toBe(100);
+      expect(result.offsets).toBe(3);
+    });
+
+    it('should correctly assemble envelope when offset exceeds total records', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [],
+        total: 5,
+      });
+
+      const result = await service.findAllPaginated({ limit: 10, offset: 100 });
+
+      expect(mockUsersRepository.findAllPaginated).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 100,
+      });
+      expect(result.users).toEqual([]);
+      expect(result.total).toBe(5);
+      expect(result.limit).toBe(10);
+      expect(result.offset).toBe(100);
+      expect(result.offsets).toBe(1);
+    });
+
+    it('should assemble complete envelope with all required properties', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [mockUser1],
+        total: 1,
+      });
+
+      const result = await service.findAllPaginated({ limit: 10, offset: 0 });
+
+      expect(result).toHaveProperty('users');
+      expect(result).toHaveProperty('total');
+      expect(result).toHaveProperty('limit');
+      expect(result).toHaveProperty('offset');
+      expect(result).toHaveProperty('offsets');
+      expect(result).toEqual({
+        users: [mockUser1],
+        total: 1,
+        limit: 10,
+        offset: 0,
+        offsets: 1,
+      });
+    });
+
+    it('should delegate to repository with normalized parameters when query properties are undefined', async () => {
+      mockUsersRepository.findAllPaginated.mockResolvedValue({
+        users: [],
+        total: 0,
+      });
+
+      await service.findAllPaginated({ limit: undefined, offset: undefined });
+
+      expect(mockUsersRepository.findAllPaginated).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 0,
+      });
     });
   });
 

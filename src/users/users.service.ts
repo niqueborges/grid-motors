@@ -9,10 +9,19 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserSummaryDto } from './dto/user-summary.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
+import { FindUsersQueryDto } from './dto/find-users.query.dto';
 import type { IUsersRepository } from './repositories/users.repository';
 import type { IAddressProvider } from '../common/providers/address/address-provider.interface';
 import type { IHashProvider } from '../common/providers/hash/hash-provider.interface';
 import { UserEntity } from './entities/user.entity';
+
+export interface PaginatedUsersResult {
+  users: UserSummaryDto[];
+  total: number;
+  limit: number;
+  offset: number;
+  offsets: number;
+}
 
 @Injectable()
 export class UsersService {
@@ -74,6 +83,28 @@ export class UsersService {
       name: user.name,
       qualified: user.qualified,
     }));
+  }
+
+  async findAllPaginated(
+    query: FindUsersQueryDto,
+  ): Promise<PaginatedUsersResult> {
+    const limit = query?.limit ?? 10;
+    const offset = query?.offset ?? 0;
+
+    const { users, total } = await this.usersRepository.findAllPaginated({
+      limit,
+      offset,
+    });
+
+    const offsets = Math.ceil(total / limit);
+
+    return {
+      users,
+      total,
+      limit,
+      offset,
+      offsets,
+    };
   }
 
   async findById(id: string): Promise<UserEntity | null> {
