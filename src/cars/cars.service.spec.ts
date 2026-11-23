@@ -149,4 +149,57 @@ describe('CarsService', () => {
       ).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('Cache Invalidation', () => {
+    let serviceWithCache: CarsService;
+    const mockCacheManager = {
+      clear: jest.fn(),
+    };
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          CarsService,
+          {
+            provide: 'ICarsRepository',
+            useValue: mockCarsRepository,
+          },
+          {
+            provide: 'CACHE_MANAGER',
+            useValue: mockCacheManager,
+          },
+        ],
+      }).compile();
+
+      serviceWithCache = module.get<CarsService>(CarsService);
+      jest.clearAllMocks();
+    });
+
+    it('should clear cache when a car is created', async () => {
+      mockCarsRepository.create.mockResolvedValue({ id: '1' });
+      await serviceWithCache.create(validCreateDto);
+      expect(mockCacheManager.clear).toHaveBeenCalled();
+    });
+
+    it('should clear cache when a car is updated', async () => {
+      mockCarsRepository.findById.mockResolvedValue({ id: '1' });
+      mockCarsRepository.update.mockResolvedValue({ id: '1', color: 'Blue' });
+      await serviceWithCache.update('1', { color: 'Blue' });
+      expect(mockCacheManager.clear).toHaveBeenCalled();
+    });
+
+    it('should clear cache when a car is removed', async () => {
+      mockCarsRepository.findById.mockResolvedValue({ id: '1' });
+      mockCarsRepository.delete.mockResolvedValue(undefined);
+      await serviceWithCache.remove('1');
+      expect(mockCacheManager.clear).toHaveBeenCalled();
+    });
+
+    it('should clear cache when a car accessory is updated', async () => {
+      mockCarsRepository.findById.mockResolvedValue({ id: '1' });
+      mockCarsRepository.updateAccessories.mockResolvedValue({ id: '1' });
+      await serviceWithCache.updateAccessory('1', { description: 'GPS' });
+      expect(mockCacheManager.clear).toHaveBeenCalled();
+    });
+  });
 });
