@@ -195,6 +195,7 @@ Example:
 ```env
 PORT=3000
 DATABASE_URL="postgresql://postgres:postgres@localhost:5433/grid_motors?schema=public"
+DB_PASSWORD=postgres
 JWT_SECRET="change-me"
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -265,6 +266,7 @@ Example:
 ```env
 PORT=3000
 DATABASE_URL="postgresql://postgres:postgres@localhost:5433/grid_motors?schema=public"
+DB_PASSWORD=postgres
 JWT_SECRET="change-me"
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -328,22 +330,40 @@ POST /api/v1/auth/login
 
 ---
 
-# 🧠 Technical Decisions & Features
+# 🧠 Technical Decisions & Modernization Features
 
-Key design decisions implemented in the API:
+Key architecture and engineering decisions implemented across the API:
 
-- **Dependency Injection & Repository Pattern:**Services are decoupled from Prisma through repository abstractions, keeping business logic independent from infrastructure details.
-- **Rate Limiting:**The API uses `@nestjs/throttler` to protect endpoints against excessive requests.
-- **Redis Caching:**Frequently accessed resources, such as the car catalog, can be cached to improve performance.
-- **Reservation Concurrency Control:**Database transactions and locking strategies prevent conflicting reservations for the same vehicle.
-- **Historical Rental Values:**Final rental values are stored during reservation creation, preserving historical consistency even if prices change later.
-- **Global Exception Filter:**Centralized exception handling provides consistent API responses.
-- **JWT Authentication:**
-  Stateless authentication using access tokens.
+- **Dependency Injection & Repository Pattern:** Services are decoupled from Prisma through repository abstractions, keeping business logic independent from infrastructure details.
+- **JWT Authentication & Fail-Fast Secrets:** Mandatory authentication with fail-fast bootstrap validation ensuring `JWT_SECRET` is non-empty.
+- **Data Minimization (LGPD):** `GET /users` enforces strict minimal projection (`id`, `name`, `qualified`), suppressing cadastral personal data and credentials from listing responses.
+- **Resource Ownership Authorization (ABAC):** Profile queries, updates, and account deletions (`/users/:id`), as well as reservation mutations (`/reservations/:id`), enforce strict ownership checks returning `HTTP 403 Forbidden` to prevent IDOR and enumeration attacks.
+- **Consistent Collection Pagination:** All collection listing endpoints (`/cars`, `/reservations`, `/users`) implement standardized pagination envelopes (`{ items, total, limit, offset, offsets }`) with defensive upper bounds (`limit <= 100`) and deterministic ordering.
+- **Reservation Concurrency Control:** Row-level pessimistic locking (`SELECT ... FOR UPDATE`) inside database transactions prevents concurrent double-booking of vehicles and user schedule overlaps.
+- **Redis Caching & Automatic Invalidation:** High-frequency vehicle queries are cached via Redis, and automatically invalidated across mutations (`POST`, `PATCH`, `DELETE`).
+- **Container Health & Operational Resilience:** Docker Compose coordinates service availability with healthchecks (`pg_isready`, `redis-cli ping`) before running Prisma migrations and application bootstrap.
+- **Historical Rental Values:** Final rental values are calculated and stored during reservation creation, preserving financial auditability.
+- **Global Exception Filter:** Centralized exception handling standardizes RFC-compliant HTTP error payloads.
 
 ---
 
-# 🧪 Testing
+# 📑 Architecture Decision Records (ADR)
+
+Significant architectural and technical decisions are documented in the `docs/adr/` directory:
+
+- [ADR 0001: Context and Scope of Modernization](docs/adr/0001-context-and-scope-of-modernization.md)
+- [ADR 0002: Node.js Runtime Version](docs/adr/0002-nodejs-runtime.md)
+- [ADR 0003: User Authentication, Data Minimization, and Ownership Authorization Policy](docs/adr/0003-users-authentication-and-ownership-authorization.md)
+- [ADR 0004: User Listing Pagination, Envelope Contract, and Deterministic Ordering](docs/adr/0004-users-pagination.md)
+- [ADR 0005: Cache Invalidation, Operational Resilience, and Test Coverage Enforcement](docs/adr/0005-cache-invalidation-and-operational-resilience.md)
+
+For a chronological release log of all modifications, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+# 🧪 Testing & Quality Gates
+
+The test suite includes comprehensive unit tests (testing services, controllers, providers, and concrete Prisma repositories) and end-to-end integration tests.
 
 Run unit tests:
 
@@ -351,16 +371,22 @@ Run unit tests:
 npm run test
 ```
 
-Run coverage:
+Run test coverage (enforcing 70% minimum global threshold across all metrics):
 
 ```bash
 npm run test:cov
 ```
 
-Run E2E tests:
+Run end-to-end integration tests:
 
 ```bash
 npm run test:e2e
+```
+
+Run static analysis and linting:
+
+```bash
+npm run lint
 ```
 
 ---
