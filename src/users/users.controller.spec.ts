@@ -3,6 +3,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FindUsersQueryDto } from './dto/find-users.query.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 describe('UsersController', () => {
@@ -12,6 +13,7 @@ describe('UsersController', () => {
   const mockUsersService = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findAllPaginated: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -87,12 +89,19 @@ describe('UsersController', () => {
   });
 
   describe('findAll', () => {
-    it('should call usersService.findAll and return the minimal projection', async () => {
-      const result = [{ id: validUuid, name: 'Test User', qualified: 'yes' }];
-      mockUsersService.findAll.mockResolvedValue(result);
+    it('should call usersService.findAllPaginated and return the paginated result', async () => {
+      const query: FindUsersQueryDto = { limit: 10, offset: 0 };
+      const result = {
+        users: [{ id: validUuid, name: 'Test User', qualified: 'yes' }],
+        total: 1,
+        limit: 10,
+        offset: 0,
+        offsets: 1,
+      };
+      mockUsersService.findAllPaginated.mockResolvedValue(result);
 
-      expect(await controller.findAll()).toEqual(result);
-      expect(mockUsersService.findAll).toHaveBeenCalled();
+      expect(await controller.findAll(query)).toEqual(result);
+      expect(mockUsersService.findAllPaginated).toHaveBeenCalledWith(query);
     });
   });
 

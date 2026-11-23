@@ -12,12 +12,14 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { UsersService, PaginatedUsersResult } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserSummaryDto } from './dto/user-summary.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
+import { FindUsersQueryDto } from './dto/find-users.query.dto';
+import { PaginatedUsersResponseDto } from './dto/paginated-users-response.dto';
 import { UserEntity } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -54,15 +56,21 @@ export class UsersController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'List all users' })
+  @ApiOperation({ summary: 'List all users with pagination' })
   @ApiResponse({
     status: 200,
-    description: 'List of users with minimal projection.',
-    type: [UserSummaryDto],
+    description: 'Paginated list of users with minimal projection.',
+    type: PaginatedUsersResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid query parameters.',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  async findAll(): Promise<UserSummaryDto[]> {
-    return this.usersService.findAll();
+  async findAll(
+    @Query() query: FindUsersQueryDto,
+  ): Promise<PaginatedUsersResult> {
+    return this.usersService.findAllPaginated(query);
   }
 
   @Get(':id')
