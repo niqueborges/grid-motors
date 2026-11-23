@@ -76,15 +76,6 @@ export class UsersService {
     return user;
   }
 
-  async findAll(): Promise<UserSummaryDto[]> {
-    const users = await this.usersRepository.findAll();
-    return users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      qualified: user.qualified,
-    }));
-  }
-
   async findAllPaginated(
     query: FindUsersQueryDto,
   ): Promise<PaginatedUsersResult> {

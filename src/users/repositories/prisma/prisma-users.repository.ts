@@ -15,11 +15,6 @@ export class PrismaUsersRepository implements IUsersRepository {
     return new UserEntity(user);
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    const users = await this.prisma.user.findMany();
-    return users.map((user) => new UserEntity(user));
-  }
-
   async findAllPaginated(params: {
     limit: number;
     offset: number;

@@ -14,7 +14,6 @@ describe('UsersService', () => {
 
   const mockUsersRepository = {
     create: jest.fn(),
-    findAll: jest.fn(),
     findAllPaginated: jest.fn(),
     findById: jest.fn(),
     findByEmail: jest.fn(),
@@ -123,49 +122,6 @@ describe('UsersService', () => {
         BadRequestException,
       );
       expect(mockUsersRepository.create).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('findAll', () => {
-    it('should return minimal projection (id, name, qualified) and omit sensitive/cadastral data', async () => {
-      const mockFullUser = {
-        id: '123e4567-e89b-12d3-a456-426614174000',
-        name: 'John Doe',
-        cpf: '12345678901',
-        birth: new Date('1990-01-01'),
-        email: 'john@example.com',
-        password: 'hashed-password',
-        cep: '01001000',
-        street: 'Main Street',
-        neighborhood: 'Downtown',
-        city: 'City',
-        state: 'ST',
-        qualified: 'yes',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      mockUsersRepository.findAll.mockResolvedValue([mockFullUser]);
-
-      const result = await service.findAll();
-
-      expect(result).toEqual([
-        {
-          id: '123e4567-e89b-12d3-a456-426614174000',
-          name: 'John Doe',
-          qualified: 'yes',
-        },
-      ]);
-      expect(result[0]).not.toHaveProperty('cpf');
-      expect(result[0]).not.toHaveProperty('birth');
-      expect(result[0]).not.toHaveProperty('email');
-      expect(result[0]).not.toHaveProperty('password');
-      expect(result[0]).not.toHaveProperty('cep');
-      expect(result[0]).not.toHaveProperty('street');
-      expect(result[0]).not.toHaveProperty('neighborhood');
-      expect(result[0]).not.toHaveProperty('city');
-      expect(result[0]).not.toHaveProperty('state');
-      expect(result[0]).not.toHaveProperty('createdAt');
-      expect(result[0]).not.toHaveProperty('updatedAt');
     });
   });
 

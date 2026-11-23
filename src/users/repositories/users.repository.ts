@@ -7,7 +7,6 @@ export interface UsersQueryResult {
 
 export interface IUsersRepository {
   create(data: Partial<UserEntity>): Promise<UserEntity>;
-  findAll(): Promise<UserEntity[]>;
   findAllPaginated(params: {
     limit: number;
     offset: number;
