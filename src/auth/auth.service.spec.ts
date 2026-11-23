@@ -10,6 +10,7 @@ describe('AuthService', () => {
 
   const mockUsersService = {
     findByEmail: jest.fn(),
+    findById: jest.fn(),
     findOne: jest.fn(),
   };
 
@@ -99,6 +100,30 @@ describe('AuthService', () => {
       expect(jwtService.sign).toHaveBeenCalled();
     });
 
+    it('should throw UnauthorizedException with identical message when email is not found', async () => {
+      mockUsersService.findByEmail.mockResolvedValue(null);
+
+      await expect(
+        service.login({
+          email: 'nonexistent@test.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow('Invalid email or password');
+    });
+
+    it('should throw UnauthorizedException with identical message when password is wrong', async () => {
+      mockUsersService.findByEmail.mockResolvedValue({
+        id: '1',
+        email: 'test@test.com',
+        password: 'hashed-password',
+      });
+      mockHashProvider.compare.mockResolvedValue(false);
+
+      await expect(
+        service.login({ email: 'test@test.com', password: 'wrong-password' }),
+      ).rejects.toThrow('Invalid email or password');
+    });
+
     it('should throw UnauthorizedException for invalid credentials', async () => {
       jest.spyOn(service, 'validateUser').mockResolvedValue(null);
 
@@ -115,7 +140,7 @@ describe('AuthService', () => {
         sub: 'user-id-1',
         email: 'test@test.com',
       });
-      mockUsersService.findOne.mockResolvedValue({
+      mockUsersService.findById.mockResolvedValue({
         id: 'user-id-1',
         email: 'test@test.com',
       });
@@ -126,6 +151,7 @@ describe('AuthService', () => {
         access_token: 'new-token',
         refresh_token: 'new-token',
       });
+      expect(mockUsersService.findById).toHaveBeenCalledWith('user-id-1');
     });
 
     it('should throw UnauthorizedException if token is invalid', async () => {
@@ -154,10 +180,13 @@ describe('AuthService', () => {
         sub: 'non-existent-user',
         email: 'ghost@test.com',
       });
-      mockUsersService.findOne.mockResolvedValue(null);
+      mockUsersService.findById.mockResolvedValue(null);
 
       await expect(service.refreshToken('valid-format-token')).rejects.toThrow(
         'Invalid refresh token',
+      );
+      expect(mockUsersService.findById).toHaveBeenCalledWith(
+        'non-existent-user',
       );
     });
   });

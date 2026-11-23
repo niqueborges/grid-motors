@@ -3,13 +3,16 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FindUsersQueryDto } from './dto/find-users.query.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 describe('UsersController', () => {
   let controller: UsersController;
+  const validUuid = '123e4567-e89b-12d3-a456-426614174000';
 
   const mockUsersService = {
     create: jest.fn(),
-    findAll: jest.fn(),
+    findAllPaginated: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -24,13 +27,45 @@ describe('UsersController', () => {
           useValue: mockUsersService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('Route Security and Authentication Metadata', () => {
+    it('should keep create endpoint public (no JwtAuthGuard)', () => {
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const targetMethod = controller.create;
+      const guards = Reflect.getMetadata(
+        '__guards__',
+        targetMethod,
+      ) as unknown[];
+      expect(guards).toBeUndefined();
+    });
+
+    it('should protect findAll, findOne, update, and remove with JwtAuthGuard', () => {
+      /* eslint-disable @typescript-eslint/unbound-method */
+      const protectedHandlers = [
+        controller.findAll,
+        controller.findOne,
+        controller.update,
+        controller.remove,
+      ];
+      /* eslint-enable @typescript-eslint/unbound-method */
+
+      for (const handler of protectedHandlers) {
+        const guards = Reflect.getMetadata('__guards__', handler) as unknown[];
+        expect(guards).toBeDefined();
+        expect(guards).toContain(JwtAuthGuard);
+      }
+    });
   });
 
   describe('create', () => {
@@ -44,7 +79,7 @@ describe('UsersController', () => {
         cep: '12345678',
         qualified: 'yes',
       };
-      const result = { id: '1', ...createDto };
+      const result = { id: validUuid, ...createDto };
       mockUsersService.create.mockResolvedValue(result);
 
       expect(await controller.create(createDto)).toEqual(result);
@@ -53,42 +88,61 @@ describe('UsersController', () => {
   });
 
   describe('findAll', () => {
-    it('should call usersService.findAll and return the result', async () => {
-      const result = [{ id: '1' }];
-      mockUsersService.findAll.mockResolvedValue(result);
+    it('should call usersService.findAllPaginated and return the paginated result', async () => {
+      const query: FindUsersQueryDto = { limit: 10, offset: 0 };
+      const result = {
+        users: [{ id: validUuid, name: 'Test User', qualified: 'yes' }],
+        total: 1,
+        limit: 10,
+        offset: 0,
+        offsets: 1,
+      };
+      mockUsersService.findAllPaginated.mockResolvedValue(result);
 
-      expect(await controller.findAll()).toEqual(result);
-      expect(mockUsersService.findAll).toHaveBeenCalled();
+      expect(await controller.findAll(query)).toEqual(result);
+      expect(mockUsersService.findAllPaginated).toHaveBeenCalledWith(query);
     });
   });
 
   describe('findOne', () => {
-    it('should call usersService.findOne and return the result', async () => {
-      const result = { id: '1' };
+    it('should forward valid UUID and currentUserId to service and return user', async () => {
+      const result = { id: validUuid, name: 'Test User' };
       mockUsersService.findOne.mockResolvedValue(result);
 
-      expect(await controller.findOne('1')).toEqual(result);
-      expect(mockUsersService.findOne).toHaveBeenCalledWith('1');
+      expect(await controller.findOne(validUuid, validUuid)).toEqual(result);
+      expect(mockUsersService.findOne).toHaveBeenCalledWith(
+        validUuid,
+        validUuid,
+      );
     });
   });
 
   describe('update', () => {
-    it('should call usersService.update and return the result', async () => {
+    it('should forward valid UUID, updateDto, and currentUserId to service', async () => {
       const updateDto: UpdateUserDto = { name: 'Updated' };
-      const result = { id: '1', name: 'Updated' };
+      const result = { id: validUuid, name: 'Updated' };
       mockUsersService.update.mockResolvedValue(result);
 
-      expect(await controller.update('1', updateDto)).toEqual(result);
-      expect(mockUsersService.update).toHaveBeenCalledWith('1', updateDto);
+      expect(await controller.update(validUuid, updateDto, validUuid)).toEqual(
+        result,
+      );
+      expect(mockUsersService.update).toHaveBeenCalledWith(
+        validUuid,
+        updateDto,
+        validUuid,
+      );
     });
   });
 
   describe('remove', () => {
-    it('should call usersService.remove and return the result', async () => {
+    it('should forward valid UUID and currentUserId to service and remove user', async () => {
       mockUsersService.remove.mockResolvedValue(undefined);
 
-      expect(await controller.remove('1')).toBeUndefined();
-      expect(mockUsersService.remove).toHaveBeenCalledWith('1');
+      expect(await controller.remove(validUuid, validUuid)).toBeUndefined();
+      expect(mockUsersService.remove).toHaveBeenCalledWith(
+        validUuid,
+        validUuid,
+      );
     });
   });
 });

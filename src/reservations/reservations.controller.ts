@@ -8,15 +8,16 @@ import {
   Delete,
   Query,
   UseGuards,
-  Req,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { FindReservationsQueryDto } from './dto/find-reservations.query.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -39,9 +40,10 @@ export class ReservationsController {
     description: 'Bad Request / Business Rule Validation Failed',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  create(@Body() createReservationDto: CreateReservationDto, @Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = req.user.id as string;
+  create(
+    @Body() createReservationDto: CreateReservationDto,
+    @CurrentUser('id') userId: string,
+  ) {
     return this.reservationsService.create(createReservationDto, userId);
   }
 
@@ -53,28 +55,64 @@ export class ReservationsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a reservation by ID' })
+  @ApiResponse({ status: 200, description: 'The reservation.' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format.' })
   @ApiResponse({ status: 404, description: 'Reservation not found' })
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param(
+      'id',
+      new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }),
+    )
+    id: string,
+  ) {
     return this.reservationsService.findOne(id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a reservation' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reservation successfully updated.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid ID format or Business Rule Validation Failed',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
   @ApiResponse({ status: 404, description: 'Reservation not found' })
-  @ApiResponse({ status: 400, description: 'Business Rule Validation Failed' })
   update(
-    @Param('id') id: string,
+    @Param(
+      'id',
+      new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }),
+    )
+    id: string,
     @Body() updateReservationDto: UpdateReservationDto,
+    @CurrentUser('id') currentUserId: string,
   ) {
-    return this.reservationsService.update(id, updateReservationDto);
+    return this.reservationsService.update(
+      id,
+      updateReservationDto,
+      currentUserId,
+    );
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a reservation' })
   @ApiResponse({ status: 204, description: 'Deleted' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
   @ApiResponse({ status: 404, description: 'Reservation not found' })
-  remove(@Param('id') id: string) {
-    return this.reservationsService.remove(id);
+  remove(
+    @Param(
+      'id',
+      new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }),
+    )
+    id: string,
+    @CurrentUser('id') currentUserId: string,
+  ) {
+    return this.reservationsService.remove(id, currentUserId);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { IUsersRepository } from '../users.repository';
+import { IUsersRepository, UsersQueryResult } from '../users.repository';
 import { UserEntity } from '../../entities/user.entity';
 import { Prisma } from '@prisma/client';
 
@@ -15,9 +15,31 @@ export class PrismaUsersRepository implements IUsersRepository {
     return new UserEntity(user);
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    const users = await this.prisma.user.findMany();
-    return users.map((user) => new UserEntity(user));
+  async findAllPaginated(params: {
+    limit: number;
+    offset: number;
+  }): Promise<UsersQueryResult> {
+    const { limit = 10, offset = 0 } = params;
+
+    const orderBy: Prisma.UserOrderByWithRelationInput[] = [
+      { name: 'asc' },
+      { id: 'asc' },
+    ];
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        skip: offset,
+        take: limit,
+        orderBy,
+        select: { id: true, name: true, qualified: true },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      users,
+      total,
+    };
   }
 
   async findById(id: string): Promise<UserEntity | null> {

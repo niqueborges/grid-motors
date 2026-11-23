@@ -2,10 +2,27 @@ import { JwtStrategy } from './jwt.strategy';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
+  let originalJwtSecret: string | undefined;
 
   beforeEach(() => {
+    originalJwtSecret = process.env.JWT_SECRET;
     process.env.JWT_SECRET = 'test-secret';
     strategy = new JwtStrategy();
+  });
+
+  afterEach(() => {
+    if (originalJwtSecret !== undefined) {
+      process.env.JWT_SECRET = originalJwtSecret;
+    } else {
+      delete process.env.JWT_SECRET;
+    }
+  });
+
+  it('should throw an Error during instantiation if JWT_SECRET is missing', () => {
+    delete process.env.JWT_SECRET;
+    expect(() => new JwtStrategy()).toThrow(
+      'JWT_SECRET environment variable is not defined or is empty.',
+    );
   });
 
   describe('validate', () => {

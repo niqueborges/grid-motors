@@ -2,6 +2,7 @@ import {
   Injectable,
   Inject,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -107,8 +108,15 @@ export class ReservationsService {
   async update(
     id: string,
     updateReservationDto: UpdateReservationDto,
+    currentUserId: string,
   ): Promise<ReservationEntity> {
     const existing = await this.findOne(id);
+
+    if (existing.userId !== currentUserId) {
+      throw new ForbiddenException(
+        'You do not have permission to update this reservation',
+      );
+    }
 
     const startDate = updateReservationDto.start_date || existing.start_date;
     const endDate = updateReservationDto.end_date || existing.end_date;
@@ -153,8 +161,15 @@ export class ReservationsService {
     }
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, currentUserId: string): Promise<void> {
+    const existing = await this.findOne(id);
+
+    if (existing.userId !== currentUserId) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this reservation',
+      );
+    }
+
     return this.reservationsRepository.delete(id);
   }
 }

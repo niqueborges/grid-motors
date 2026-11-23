@@ -1,4 +1,11 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Optional,
+  NotFoundException,
+} from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
 import { FindCarsQueryDto } from './dto/find-cars.query.dto';
@@ -11,7 +18,16 @@ export class CarsService {
   constructor(
     @Inject('ICarsRepository')
     private readonly carsRepository: ICarsRepository,
+    @Optional()
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager?: Cache,
   ) {}
+
+  private async invalidateCache(): Promise<void> {
+    if (this.cacheManager) {
+      await this.cacheManager.clear();
+    }
+  }
 
   async create(createCarDto: CreateCarDto): Promise<CarEntity> {
     const carEntity: CarEntity = {
@@ -24,7 +40,9 @@ export class CarsService {
         description: a.description,
       })),
     };
-    return this.carsRepository.create(carEntity);
+    const car = await this.carsRepository.create(carEntity);
+    await this.invalidateCache();
+    return car;
   }
 
   async findAll(query: FindCarsQueryDto) {
@@ -42,13 +60,16 @@ export class CarsService {
   async update(id: string, updateCarDto: UpdateCarDto): Promise<CarEntity> {
     // Check if exists
     await this.findOne(id);
-    return this.carsRepository.update(id, updateCarDto);
+    const updated = await this.carsRepository.update(id, updateCarDto);
+    await this.invalidateCache();
+    return updated;
   }
 
   async remove(id: string): Promise<void> {
     // Check if exists
     await this.findOne(id);
-    return this.carsRepository.delete(id);
+    await this.carsRepository.delete(id);
+    await this.invalidateCache();
   }
 
   async updateAccessory(
@@ -57,9 +78,11 @@ export class CarsService {
   ): Promise<CarEntity> {
     // Check if exists
     await this.findOne(carId);
-    return this.carsRepository.updateAccessories(
+    const updated = await this.carsRepository.updateAccessories(
       carId,
       updateAccessoryDto.description,
     );
+    await this.invalidateCache();
+    return updated;
   }
 }
