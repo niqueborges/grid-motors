@@ -35,6 +35,14 @@ interface ApiUserSummaryResponse {
   password?: string;
 }
 
+interface ApiPaginatedUsersResponse {
+  users: ApiUserSummaryResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+  offsets: number;
+}
+
 interface ApiUserProfileResponse {
   id: string;
   name: string;
@@ -314,7 +322,7 @@ describe('Grid Motors API (e2e)', () => {
       await request(app.getHttpServer()).get('/api/v1/users').expect(401);
     });
 
-    it('/api/v1/users (GET) - should return minimal projection (id, name, qualified only) with valid JWT', async () => {
+    it('/api/v1/users (GET) - should return paginated minimal projection (id, name, qualified only) with valid JWT', async () => {
       const minimalUsers = [
         {
           id: user1Id,
@@ -327,16 +335,32 @@ describe('Grid Motors API (e2e)', () => {
           qualified: 'no',
         },
       ];
-      jest.spyOn(usersService, 'findAll').mockResolvedValueOnce(minimalUsers);
+      const paginatedResult = {
+        users: minimalUsers,
+        total: 2,
+        limit: 10,
+        offset: 0,
+        offsets: 1,
+      };
+      const spy = jest
+        .spyOn(usersService, 'findAllPaginated')
+        .mockResolvedValueOnce(paginatedResult);
 
       const response = await request(app.getHttpServer())
         .get('/api/v1/users')
         .set('Authorization', `Bearer ${user1Token}`)
         .expect(200);
 
-      const users = response.body as ApiUserSummaryResponse[];
-      expect(users).toHaveLength(2);
-      for (const u of users) {
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 10, offset: 0 }),
+      );
+      const body = response.body as ApiPaginatedUsersResponse;
+      expect(body.total).toBe(2);
+      expect(body.limit).toBe(10);
+      expect(body.offset).toBe(0);
+      expect(body.offsets).toBe(1);
+      expect(body.users).toHaveLength(2);
+      for (const u of body.users) {
         expect(u.id).toBeDefined();
         expect(u.name).toBeDefined();
         expect(u.qualified).toBeDefined();
@@ -351,6 +375,108 @@ describe('Grid Motors API (e2e)', () => {
         expect(u).not.toHaveProperty('cep');
         expect(u).not.toHaveProperty('street');
       }
+    });
+
+    it('/api/v1/users (GET) - should pass pagination query parameters to usersService.findAllPaginated', async () => {
+      const paginatedResult = {
+        users: [
+          {
+            id: user1Id,
+            name: 'User One',
+            qualified: 'yes',
+          },
+        ],
+        total: 15,
+        limit: 5,
+        offset: 10,
+        offsets: 3,
+      };
+      const spy = jest
+        .spyOn(usersService, 'findAllPaginated')
+        .mockResolvedValueOnce(paginatedResult);
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/users?limit=5&offset=10')
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(200);
+
+      expect(spy).toHaveBeenCalledWith({ limit: 5, offset: 10 });
+      const body = response.body as ApiPaginatedUsersResponse;
+      expect(body.total).toBe(15);
+      expect(body.limit).toBe(5);
+      expect(body.offset).toBe(10);
+      expect(body.offsets).toBe(3);
+      expect(body.users).toHaveLength(1);
+    });
+
+    it('/api/v1/users (GET) - should reject limit < 1 with HTTP 400', async () => {
+      const spy = jest.spyOn(usersService, 'findAllPaginated');
+      spy.mockClear();
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/users?limit=0')
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(400);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(400);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('/api/v1/users (GET) - should reject limit > 100 with HTTP 400', async () => {
+      const spy = jest.spyOn(usersService, 'findAllPaginated');
+      spy.mockClear();
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/users?limit=101')
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(400);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(400);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('/api/v1/users (GET) - should reject negative offset with HTTP 400', async () => {
+      const spy = jest.spyOn(usersService, 'findAllPaginated');
+      spy.mockClear();
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/users?offset=-1')
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(400);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(400);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('/api/v1/users (GET) - should reject non-integer limit with HTTP 400', async () => {
+      const spy = jest.spyOn(usersService, 'findAllPaginated');
+      spy.mockClear();
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/users?limit=abc')
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(400);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(400);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('/api/v1/users (GET) - should reject non-whitelisted query params with HTTP 400', async () => {
+      const spy = jest.spyOn(usersService, 'findAllPaginated');
+      spy.mockClear();
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/users?unexpectedParam=foo')
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(400);
+
+      const body = response.body as ApiResponseError;
+      expect(body.statusCode).toBe(400);
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('/api/v1/users/:id (GET) - should require authentication (HTTP 401 without token)', async () => {
